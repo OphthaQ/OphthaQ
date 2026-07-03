@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My MCQ App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="home-screen" class="container">
+        <div id="auth-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+            <span id="user-welcome" style="font-size: 14px; color: #64748b; font-weight: 500;">Please log in →</span>
+            <button id="login-btn" onclick="loginWithGoogle()" style="background-color: #2c3e50; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Sign In with Google</button>
+            <button id="logout-btn" onclick="logout()" class="hide" style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
+        </div>
+
+        <div style="display: flex; background-color: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 25px; gap: 4px;">
+            <button id="tab-available" onclick="switchTab('available')" style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: #ffffff; color: #2c3e50; transition: all 0.2s;">
+                Available Papers
+            </button>
+            <button id="tab-completed" onclick="switchTab('completed')" style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: transparent; color: #64748b; transition: all 0.2s;">
+                Completed Papers
+            </button>
+            <button id="tab-bookmarks" onclick="switchTab('bookmarks')" style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: transparent; color: #64748b; transition: all 0.2s;">
+                Bookmarks 🔖
+            </button>
+        </div>
+
+        <div id="papers-list-container">
+            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Select an Exam Paper</h2>
+            <div id="papers-list" class="papers-container">
+                </div>
+        </div>
+
+        <div id="history-section" class="hide">
+            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Your Performance History</h2>
+            <div id="history-list" style="display: flex; flex-direction: column; gap: 10px;">
+                </div>
+        </div>
+
+        <div id="bookmarks-section" class="hide">
+            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Your Bookmarked Questions</h2>
+            <div id="bookmarks-list" style="display: flex; flex-direction: column; gap: 15px;">
+                </div>
+        </div>
+    </div>
+
+    <div id="quiz-screen" class="container hide">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <button id="back-btn" onclick="goToHome()" style="margin: 0;">← Back to Home</button>
+            <button id="bookmark-toggle-btn" onclick="toggleCurrentBookmark()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                <span>🔖</span> Bookmark Question
+            </button>
+        </div>
+        
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="progress-text">Question 0 of 0</p>
+        
+        <h2 id="question-text">Question text will go here</h2>
+        
+        <div class="options-container">
+            <button class="option-btn" onclick="checkAnswer(0)">Option 1</button>
+            <button class="option-btn" onclick="checkAnswer(1)">Option 2</button>
+            <button class="option-btn" onclick="checkAnswer(2)">Option 3</button>
+            <button class="option-btn" onclick="checkAnswer(3)">Option 4</button>
+        </div>
+
+        <div id="explanation-box" class="hide" style="
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px 8px 8px 4px;
+            text-align: left;
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+        ">
+            <strong>Explanation:</strong> <span id="explanation-text"></span>
+        </div>
+
+        <button id="next-btn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

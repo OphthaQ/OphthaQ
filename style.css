@@ -1,0 +1,206 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.quiz-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.option-btn {
+    background-color: #ffffff;
+    border: 2px solid #e0e0e0;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.option-btn:hover {
+    background-color: #eef2ff;
+    border-color: #4f46e5;
+}
+
+#next-btn {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+#next-btn:hover {
+    background-color: #4338ca;
+}/* New styles for answer feedback */
+.correct {
+    background-color: #d1fae5 !important; /* Soft green */
+    border-color: #10b981 !important;
+    color: #065f46;
+}
+
+.wrong {
+    background-color: #fee2e2 !important; /* Soft red */
+    border-color: #ef4444 !important;
+    color: #991b1b;
+}/* Container updates */
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+}
+
+/* Class to easily hide elements */
+.hide {
+    display: none !important;
+}
+
+/* Homepage Paper Buttons */
+.papers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.paper-card {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.paper-card:hover {
+    background-color: #e0e7ff;
+    border-color: #6366f1;
+    color: #4f46e5;
+}
+
+/* Back Button styling */
+#back-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    float: left;
+    margin-bottom: 15px;
+}
+#back-btn:hover {
+    color: #334155;
+}/* Progress Bar Layout */
+.progress-container {
+    background-color: #e2e8f0; /* Grey background track */
+    border-radius: 10px;
+    height: 12px;
+    width: 100%;
+    margin-top: 10px;
+    overflow: hidden; /* Keeps the inside bar rounded */
+}
+
+#progress-bar {
+    background-color: #10b981; /* Indigo or Green filler color */
+    height: 100%;
+    width: 0%; /* Starts at 0% and is managed by JavaScript */
+    transition: width 0.4s ease-in-out; /* Smooth slide animation */
+}
+
+#progress-text {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}/* Results Screen Layout */
+.results-summary {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8fafc;
+    border-radius: 10px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 16px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.text-success {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #ef4444;
+    font-weight: bold;
+}/* Container to make sure the pie chart doesn't get too large */
+.chart-container {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto; /* Centers the chart horizontally */
+}/* Pure CSS Pie Chart Styling */
+.css-pie-chart {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 20px auto;
+    background: conic-gradient(#10b981 0% 100%, #ef4444 0% 100%); /* Placeholder colors */
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5), 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Legend below the chart */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.dot.green { background-color: #10b981; }
+.dot.red { background-color: #ef4444; }
