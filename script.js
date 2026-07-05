@@ -32,7 +32,10 @@ const paperTitlesMap = {
     ficoB: "FICO part B",
     ficoC: "FICO part C",
     ficoD: "FICO part D",
-    seniorResidency: "Senior residency exam papers"
+    frcoPhthal1: "FRCOphthal 1",
+    frcoPhthal2: "FRCOphthal 2",
+    iniSS: "INI - SS",
+    iniCetSR: "INICET - SRship exam"
 };
 
 let quizPapers = {}; 
