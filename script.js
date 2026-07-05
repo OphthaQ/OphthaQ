@@ -32,10 +32,7 @@ const paperTitlesMap = {
     ficoB: "FICO part B",
     ficoC: "FICO part C",
     ficoD: "FICO part D",
-    frcoPhthal1: "FRCOphthal 1",
-    frcoPhthal2: "FRCOphthal 2",
-    iniSS: "INI - SS",
-    iniCetSR: "INICET - SRship exam"
+    seniorResidency: "Senior residency exam papers"
 };
 
 let quizPapers = {}; 
@@ -47,6 +44,29 @@ let currentUser = null;
 let currentPaperKey = "";
 let activeTab = "available";
 let currentBookmarksMap = new Set();
+
+// ==========================================
+// THEME SWITCHER UTILITY ROUTINES
+// ==========================================
+window.toggleTheme = function() {
+    if (document.body.classList.contains("dark-theme")) {
+        document.body.classList.remove("dark-theme");
+        localStorage.setItem("app-theme", "light");
+    } else {
+        document.body.classList.add("dark-theme");
+        localStorage.setItem("app-theme", "dark");
+    }
+}
+
+function initTheme() {
+    const savedTheme = localStorage.getItem("app-theme");
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-theme");
+    } else {
+        document.body.classList.remove("dark-theme");
+    }
+}
+initTheme(); // Executed immediately on system initialize
 
 // ==========================================
 // 3. GOOGLE SHEET ASYNC CSV PARSER
@@ -129,28 +149,23 @@ window.switchTab = function(tabName) {
     const historySection = document.getElementById("history-section");
     const bookmarksSection = document.getElementById("bookmarks-section");
     
-    const tabAvailableBtn = document.getElementById("tab-available");
-    const tabCompletedBtn = document.getElementById("tab-completed");
-    const tabBookmarksBtn = document.getElementById("tab-bookmarks");
+    const tabs = document.querySelectorAll(".tab-btn");
+    tabs.forEach(tab => tab.classList.remove("active-tab"));
 
     availableContainer.classList.add("hide");
     historySection.classList.add("hide");
     bookmarksSection.classList.add("hide");
-    
-    tabAvailableBtn.style.backgroundColor = "transparent"; tabAvailableBtn.style.color = "#64748b";
-    tabCompletedBtn.style.backgroundColor = "transparent"; tabCompletedBtn.style.color = "#64748b";
-    tabBookmarksBtn.style.backgroundColor = "transparent"; tabBookmarksBtn.style.color = "#64748b";
 
     if (activeTab === "available") {
         availableContainer.classList.remove("hide");
-        tabAvailableBtn.style.backgroundColor = "#ffffff"; tabAvailableBtn.style.color = "#2c3e50";
+        document.getElementById("tab-available").classList.add("active-tab");
     } else if (activeTab === "completed") {
         historySection.classList.remove("hide");
-        tabCompletedBtn.style.backgroundColor = "#ffffff"; tabCompletedBtn.style.color = "#2c3e50";
+        document.getElementById("tab-completed").classList.add("active-tab");
         loadUserHistory();
     } else if (activeTab === "bookmarks") {
         bookmarksSection.classList.remove("hide");
-        tabBookmarksBtn.style.backgroundColor = "#ffffff"; tabBookmarksBtn.style.color = "#2c3e50";
+        document.getElementById("tab-bookmarks").classList.add("active-tab");
         loadBookmarkedQuestions();
     }
 }
@@ -164,16 +179,16 @@ async function loadUserHistory() {
         historyList.innerHTML = "";
 
         if (querySnapshot.empty) {
-            historyList.innerHTML = `<p style="color: #94a3b8; font-size: 13px; text-align: center; margin-top: 20px;">No quiz history compiled yet.</p>`;
+            historyList.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 20px;">No quiz history compiled yet.</p>`;
         } else {
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const historyCard = document.createElement("div");
-                historyCard.style = "background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.01);";
+                historyCard.className = "history-card";
                 historyCard.innerHTML = `
                     <div style="text-align: left;">
-                        <strong style="color: #2c3e50;">${data.paperName}</strong><br>
-                        <span style="font-size: 11px; color: #94a3b8;">Completed: ${data.dateCompleted}</span>
+                        <strong style="color: var(--text-main);">${data.paperName}</strong><br>
+                        <span style="font-size: 11px; color: var(--text-muted);">Completed: ${data.dateCompleted}</span>
                     </div>
                     <span style="font-weight: bold; color: ${data.percentage >= 50 ? '#2a9d8f' : '#e76f51'}; background-color: ${data.percentage >= 50 ? '#e6f4ea' : '#fce8e6'}; padding: 4px 10px; border-radius: 20px; font-size: 13px;">
                         ${data.score}/${data.total} (${data.percentage}%)
@@ -210,7 +225,7 @@ window.toggleCurrentBookmark = async function() {
     if (currentBookmarksMap.has(questionId)) {
         await deleteDoc(docRef);
         currentBookmarksMap.delete(questionId);
-        btn.style.background = "#f1f5f9"; btn.style.color = "#475569";
+        btn.style.background = "var(--tab-inactive-bg)"; btn.style.color = "var(--text-muted)";
         btn.querySelector("span").innerText = "🔖";
     } else {
         await setDoc(docRef, {
@@ -235,31 +250,34 @@ async function loadBookmarkedQuestions() {
         bookmarksList.innerHTML = "";
 
         if (querySnapshot.empty) {
-            bookmarksList.innerHTML = `<p style="color: #94a3b8; font-size: 13px; text-align: center; margin-top: 20px;">No bookmarked questions saved yet.</p>`;
+            bookmarksList.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 20px;">No bookmarked questions saved yet.</p>`;
             return;
         }
 
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const card = document.createElement("div");
-            card.style = "background-color: #ffffff; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; text-align: left; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);";
+            card.className = "bookmark-card";
             
             let optionsHTML = "";
             data.options.forEach(opt => {
                 const isCorrect = opt === data.correctAnswer;
-                optionsHTML += `<div style="padding: 8px 12px; margin-top: 6px; border-radius: 6px; font-size: 13px; border: 1px solid ${isCorrect ? '#86efac' : '#e2e8f0'}; background-color: ${isCorrect ? '#f0fdf4' : '#f8fafc'}; color: ${isCorrect ? '#166534' : '#475569'}; font-weight: ${isCorrect ? '600' : '400'};">
+                
+                let borderStyle = isCorrect ? 'border: 1px solid #86efac; background-color: #f0fdf4; color: #166534; font-weight: 600;' : 'border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);';
+                
+                optionsHTML += `<div class="bookmark-option-item" style="${borderStyle}">
                     ${opt} ${isCorrect ? '✓ (Correct)' : ''}
                 </div>`;
             });
 
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
-                    <span style="font-size: 11px; background-color:#f1f5f9; padding: 3px 8px; border-radius:12px; color:#64748b; font-weight:500;">${data.paperTitle}</span>
+                    <span style="font-size: 11px; background-color: var(--tab-inactive-bg); padding: 3px 8px; border-radius:12px; color: var(--text-muted); font-weight:500;">${data.paperTitle}</span>
                     <button onclick="removeBookmarkFromDashboard('${docSnap.id}')" style="background:transparent; border:none; color:#ef4444; font-size:12px; cursor:pointer;">Remove ✕</button>
                 </div>
-                <h4 style="margin: 5px 0 12px 0; font-size: 15px; color:#1e293b; line-height:1.4;">${data.questionText}</h4>
+                <h4 style="margin: 5px 0 12px 0; font-size: 15px; color: var(--text-main); line-height:1.4;">${data.questionText}</h4>
                 <div>${optionsHTML}</div>
-                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0; font-size:13px; color:#64748b;">
+                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-color); font-size:13px; color: var(--text-muted);">
                     <strong>Explanation:</strong> ${data.explanation}
                 </div>
             `;
@@ -302,7 +320,7 @@ function loadQuestion() {
     if (currentBookmarksMap.has(questionId)) {
         btn.style.background = "#e0f2fe"; btn.style.color = "#0369a1"; btn.querySelector("span").innerText = "⭐";
     } else {
-        btn.style.background = "#f1f5f9"; btn.style.color = "#475569"; btn.querySelector("span").innerText = "🔖";
+        btn.style.background = "var(--tab-inactive-bg)"; btn.style.color = "var(--text-muted)"; btn.querySelector("span").innerText = "🔖";
     }
 
     const optionButtons = document.querySelectorAll(".option-btn");
@@ -355,19 +373,19 @@ window.nextQuestion = function() {
         saveScoreToCloud(score, total);
 
         document.getElementById("quiz-screen").innerHTML = `
-            <h2 style="color: #2c3e50; margin-bottom: 5px;">Quiz Completed!</h2>
-            <p style="color: #7f8c8d; font-size: 14px; margin-top: 0; margin-bottom: 25px;">Here is your performance breakdown</p>
+            <h2 style="color: var(--text-main); margin-bottom: 5px;">Quiz Completed!</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 0; margin-bottom: 25px;">Here is your performance breakdown</p>
             <div style="width: 160px; height: 160px; border-radius: 50%; margin: 20px auto; box-shadow: 0 8px 24px rgba(0,0,0,0.06); background: conic-gradient(#2a9d8f 0% ${correctPercentage}%, #e76f51 ${correctPercentage}% 100%);"></div>
             <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 25px; font-size: 14px; font-weight: 500;">
-                <div style="display: flex; align-items: center; gap: 8px; color: #2c3e50;"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #2a9d8f; display: inline-block;"></span> Correct</div>
-                <div style="display: flex; align-items: center; gap: 8px; color: #2c3e50;"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #e76f51; display: inline-block;"></span> Wrong</div>
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #2a9d8f; display: inline-block;"></span> Correct</div>
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #e76f51; display: inline-block;"></span> Wrong</div>
             </div>
-            <div class="results-summary" style="border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                <div class="stat-row"><span>Total Questions:</span> <strong>${total}</strong></div>
-                <div class="stat-row"><span>Correct Answers:</span> <span style="color: #2a9d8f; font-weight: bold;">${score} (${correctPercentage}%)</span></div>
-                <div class="stat-row"><span>Wrong Answers:</span> <span style="color: #e76f51; font-weight: bold;">${wrongAnswers} (${wrongPercentage}%)</span></div>
+            <div class="results-summary" style="border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <div class="stat-row"><span style="color: var(--text-muted);">Total Questions:</span> <strong style="color: var(--text-main);">${total}</strong></div>
+                <div class="stat-row"><span style="color: var(--text-muted);">Correct Answers:</span> <span style="color: #2a9d8f; font-weight: bold;">${score} (${correctPercentage}%)</span></div>
+                <div class="stat-row"><span style="color: var(--text-muted);">Wrong Answers:</span> <span style="color: #e76f51; font-weight: bold;">${wrongAnswers} (${wrongPercentage}%)</span></div>
             </div>
-            <button id="next-btn" onclick="location.reload()" style="margin-top: 20px; background-color: #2c3e50;">Return to Homepage</button>
+            <button id="next-btn" onclick="location.reload()" style="margin-top: 20px; background-color: var(--button-primary-bg); color: var(--button-primary-text);">Return to Homepage</button>
         `;
     }
 }
