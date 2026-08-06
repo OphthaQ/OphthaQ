@@ -38,10 +38,12 @@ body {
     color: var(--text-main);
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    align-items: flex-start; /* Changed from center to allow natural top-to-bottom scrolling */
+    min-height: 100vh;       /* Changed from height to min-height so it expands dynamically */
     margin: 0;
+    padding: 20px 0;         /* Added padding so the container never touches the screen edge */
     transition: background-color 0.3s, color 0.3s;
+    overflow-y: auto;        /* Ensures the browser scrollbar works perfectly */
 }
 
 .container {
@@ -53,6 +55,9 @@ body {
     max-width: 450px;
     text-align: center;
     transition: background-color 0.3s, border-color 0.3s;
+    /* Added bounds controls to prevent layout clipping */
+    box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 .hide {
@@ -169,7 +174,7 @@ body {
 
 .paper-card:hover {
     background-color: var(--bg-card-hover);
-    border-color: #6366f1;
+    border-color: #b6b7f6;
     color: #4f46e5;
 }
 
