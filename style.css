@@ -1,227 +1,21 @@
-/* ==========================================
-   THEME VARIABLE DEFINITIONS
-   ========================================== */
-:root {
-    --bg-body: #f0f2f5;
-    --bg-container: #ffffff;
-    --bg-card: #f8fafc;
-    --bg-card-hover: #e0e7ff;
-    --border-color: #e2e8f0;
-    --text-main: #2c3e50;
-    --text-muted: #64748b;
-    --text-contrast: #334155;
-    --tab-inactive-bg: #f1f5f9;
-    --button-primary-bg: #2c3e50;
-    --button-primary-text: #ffffff;
-}
-
-body.dark-theme {
-    --bg-body: #0f172a;
-    --bg-container: #1e293b;
-    --bg-card: #334155;
-    --bg-card-hover: #475569;
-    --border-color: #475569;
-    --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
-    --text-contrast: #cbd5e1;
-    --tab-inactive-bg: #0f172a;
-    --button-primary-bg: #38bdf8;
-    --button-primary-text: #0f172a;
-}
-
-/* ==========================================
-   CORE APPLICATION LAYOUTS
-   ========================================== */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: var(--bg-body);
-    color: var(--text-main);
+    background-color: #f0f2f5;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Changed from center to allow natural top-to-bottom scrolling */
-    min-height: 100vh;       /* Changed from height to min-height so it expands dynamically */
+    align-items: center;
+    height: 100vh;
     margin: 0;
-    padding: 20px 0;         /* Added padding so the container never touches the screen edge */
-    transition: background-color 0.3s, color 0.3s;
-    overflow-y: auto;        /* Ensures the browser scrollbar works perfectly */
 }
 
-.container {
-    background-color: var(--bg-container);
+.quiz-container {
+    background-color: white;
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     width: 90%;
     max-width: 450px;
     text-align: center;
-    transition: background-color 0.3s, border-color 0.3s;
-    /* Added bounds controls to prevent layout clipping */
-    box-sizing: border-box;
-    margin-bottom: 20px;
-}
-
-.hide {
-    display: none !important;
-}
-
-/* Auth Header */
-#auth-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding-bottom: 15px; 
-    margin-bottom: 20px; 
-    border-bottom: 1px solid var(--border-color);
-}
-
-#user-welcome {
-    font-size: 14px; 
-    color: var(--text-muted); 
-    font-weight: 500;
-}
-
-#login-btn {
-    background-color: var(--button-primary-bg); 
-    color: var(--button-primary-text); 
-    border: none; 
-    padding: 6px 12px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-size: 13px;
-    font-weight: 600;
-}
-
-#logout-btn {
-    background-color: #ef4444; 
-    color: white; 
-    border: none; 
-    padding: 6px 12px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-size: 13px;
-}
-
-/* Theme Toggle Button Style */
-#theme-toggle {
-    background-color: var(--bg-card);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-#theme-toggle:hover {
-    background-color: var(--bg-card-hover);
-}
-
-/* Navigation Tabs */
-.tabs-nav-wrapper {
-    display: flex; 
-    background-color: var(--tab-inactive-bg); 
-    padding: 4px; 
-    border-radius: 8px; 
-    margin-bottom: 25px; 
-    gap: 4px;
-}
-
-.tab-btn {
-    flex: 1; 
-    border: none; 
-    padding: 10px 5px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    font-size: 13px; 
-    background-color: transparent; 
-    color: var(--text-muted); 
-    transition: all 0.2s;
-}
-
-.tab-btn.active-tab {
-    background-color: var(--bg-container) !important; 
-    color: var(--text-main) !important;
-}
-
-.section-title {
-    font-size: 18px; 
-    color: var(--text-main); 
-    text-align: left; 
-    margin-bottom: 15px;
-}
-
-/* Homepage Paper Buttons */
-.papers-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 25px;
-}
-
-.paper-card {
-    background-color: var(--bg-card);
-    border: 2px solid var(--border-color);
-    padding: 18px;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--text-contrast);
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.paper-card:hover {
-    background-color: var(--bg-card-hover);
-    border-color: #b6b7f6;
-    color: #4f46e5;
-}
-
-/* ==========================================
-   QUIZ VIEW COMPONENTS
-   ========================================== */
-#back-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 14px;
-    cursor: pointer;
-    margin-bottom: 15px;
-}
-#back-btn:hover {
-    color: var(--text-main);
-}
-
-.progress-container {
-    background-color: var(--border-color); 
-    border-radius: 10px;
-    height: 12px;
-    width: 100%;
-    margin-top: 10px;
-    overflow: hidden; 
-}
-
-#progress-bar {
-    background-color: #10b981; 
-    height: 100%;
-    width: 0%; 
-    transition: width 0.4s ease-in-out; 
-}
-
-#progress-text {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-top: 5px;
-    margin-bottom: 20px;
-    font-weight: 500;
-}
-
-.quiz-question {
-    font-size: 18px; 
-    color: var(--text-main); 
-    text-align: left; 
-    margin-bottom: 15px;
 }
 
 .options-container {
@@ -232,19 +26,18 @@ body {
 }
 
 .option-btn {
-    background-color: var(--bg-container);
-    border: 2px solid var(--border-color);
-    color: var(--text-main);
+    background-color: #ffffff;
+    border: 2px solid #e0e0e0;
     padding: 12px;
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
     transition: 0.2s;
-    text-align: left;
 }
 
 .option-btn:hover {
-    background-color: var(--bg-card-hover);
+    background-color: #eef2ff;
+    border-color: #4f46e5;
 }
 
 #next-btn {
@@ -257,74 +50,102 @@ body {
     cursor: pointer;
     width: 100%;
 }
+
 #next-btn:hover {
     background-color: #4338ca;
-}
-
+}/* New styles for answer feedback */
 .correct {
-    background-color: #d1fae5 !important; 
+    background-color: #d1fae5 !important; /* Soft green */
     border-color: #10b981 !important;
-    color: #065f46 !important;
+    color: #065f46;
 }
 
 .wrong {
-    background-color: #fee2e2 !important; 
+    background-color: #fee2e2 !important; /* Soft red */
     border-color: #ef4444 !important;
-    color: #991b1b !important;
+    color: #991b1b;
+}/* Container updates */
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
 }
 
-#explanation-box {
-    background-color: var(--bg-card);
-    border-left: 4px solid #3b82f6;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 4px 8px 8px 4px;
-    text-align: left;
-    font-size: 14px;
-    color: var(--text-main);
-    line-height: 1.5;
+/* Class to easily hide elements */
+.hide {
+    display: none !important;
 }
 
-/* Dynamic Content Stacking Layouts (History & Bookmarks) */
-.vertical-stack-list {
+/* Homepage Paper Buttons */
+.papers-container {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 25px;
 }
 
-.history-card {
-    background-color: var(--bg-card); 
-    border: 1px solid var(--border-color); 
-    padding: 14px; 
-    border-radius: 8px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    font-size: 14px; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+.paper-card {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.bookmark-card {
-    background-color: var(--bg-container); 
-    border: 1px solid var(--border-color); 
-    padding: 18px; 
-    border-radius: 8px; 
-    text-align: left; 
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+.paper-card:hover {
+    background-color: #e0e7ff;
+    border-color: #6366f1;
+    color: #4f46e5;
 }
 
-.bookmark-option-item {
-    padding: 8px 12px; 
-    margin-top: 6px; 
-    border-radius: 6px; 
-    font-size: 13px;
+/* Back Button styling */
+#back-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    float: left;
+    margin-bottom: 15px;
+}
+#back-btn:hover {
+    color: #334155;
+}/* Progress Bar Layout */
+.progress-container {
+    background-color: #e2e8f0; /* Grey background track */
+    border-radius: 10px;
+    height: 12px;
+    width: 100%;
+    margin-top: 10px;
+    overflow: hidden; /* Keeps the inside bar rounded */
 }
 
-/* Results Screen Layout */
+#progress-bar {
+    background-color: #10b981; /* Indigo or Green filler color */
+    height: 100%;
+    width: 0%; /* Starts at 0% and is managed by JavaScript */
+    transition: width 0.4s ease-in-out; /* Smooth slide animation */
+}
+
+#progress-text {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}/* Results Screen Layout */
 .results-summary {
     margin: 20px 0;
     padding: 15px;
-    background-color: var(--bg-card);
+    background-color: #f8fafc;
     border-radius: 10px;
 }
 
@@ -333,16 +154,53 @@ body {
     justify-content: space-between;
     padding: 8px 0;
     font-size: 16px;
-    border-bottom: 1px dashed var(--border-color);
+    border-bottom: 1px dashed #e2e8f0;
 }
+
 .stat-row:last-child {
     border-bottom: none;
-}/* ==========================================
-   DARK THEME HOMEPAGE PAPER CARD OVERRIDES
-   ========================================== */
-body.dark-theme .paper-card:hover {
-    background-color: #ffd04e !important; /* Deep warm burnt-orange background */
-    border-color: #f59e0b !important;     /* Bright amber yellow border outline */
-    color: #000000 !important;            /* Soft clear yellow text */
-    box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15); /* Subtle warm outer glow */
 }
+
+.text-success {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #ef4444;
+    font-weight: bold;
+}/* Container to make sure the pie chart doesn't get too large */
+.chart-container {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto; /* Centers the chart horizontally */
+}/* Pure CSS Pie Chart Styling */
+.css-pie-chart {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: 20px auto;
+    background: conic-gradient(#10b981 0% 100%, #ef4444 0% 100%); /* Placeholder colors */
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5), 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Legend below the chart */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.dot.green { background-color: #10b981; }
+.dot.red { background-color: #ef4444; }
