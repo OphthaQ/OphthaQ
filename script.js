@@ -296,33 +296,13 @@ window.removeBookmarkFromDashboard = async function(id) {
 // ==========================================
 // 6. QUIZ WORKFLOW CONTROLLERS
 // ==========================================
-// ==========================================
-// QUIZ WORKFLOW CONTROLLERS WITH PERSISTENCE
-// ==========================================
-// ==========================================
-// QUIZ WORKFLOW CONTROLLER (SILENT AUTO-RESUME)
-// ==========================================
 function startQuiz(paperKey) {
     if (!currentUser) return alert("Access Denied! You must log in with your Google Account to take exam papers.");
 
     currentPaperKey = paperKey;
     activeQuestions = quizPapers[paperKey].questions;
-
-    // Check if there's a saved session for this specific paper and user
-    const sessionKey = `quiz_session_${currentUser.uid}_${paperKey}`;
-    const savedSession = localStorage.getItem(sessionKey);
-
-    if (savedSession) {
-        const sessionData = JSON.parse(savedSession);
-        // Automatically restore progress silently without any popups
-        currentQuestionIndex = sessionData.currentIndex;
-        score = sessionData.score;
-        console.log(`Resumed automatically at question index: ${currentQuestionIndex}`);
-    } else {
-        // Start completely fresh if no save data exists
-        currentQuestionIndex = 0;
-        score = 0;
-    }
+    currentQuestionIndex = 0;
+    score = 0;
 
     document.getElementById("home-screen").classList.add("hide");
     document.getElementById("quiz-screen").classList.remove("hide");
@@ -347,7 +327,6 @@ function loadQuestion() {
     optionButtons.forEach((button, index) => {
         button.innerText = currentQuestion.options[index];
         button.classList.remove("correct", "wrong");
-        button.disabled = false; // Ensure buttons are enabled on load
     });
 
     document.getElementById("explanation-box").classList.add("hide");
@@ -356,58 +335,6 @@ function loadQuestion() {
     const displayedQuestionNumber = currentQuestionIndex + 1;
     document.getElementById("progress-text").innerText = `Question ${displayedQuestionNumber} of ${totalQuestions}`;
     document.getElementById("progress-bar").style.width = ((displayedQuestionNumber / totalQuestions) * 100) + "%";
-
-    // Save state on load so that even if they quit without answering the current question, the position is remembered
-    saveCurrentProgressLocally();
-}
-
-window.nextQuestion = function() {
-    if (!hasAnswered) return alert("Please select an answer first!");
-
-    currentQuestionIndex++;
-    
-    if (currentQuestionIndex < activeQuestions.length) {
-        loadQuestion();
-    } else {
-        // Quiz is fully complete! Clean up the local cache storage
-        const sessionKey = `quiz_session_${currentUser.uid}_${currentPaperKey}`;
-        localStorage.removeItem(sessionKey);
-
-        const total = activeQuestions.length;
-        const wrongAnswers = total - score;
-        const correctPercentage = Math.round((score / total) * 100);
-        const wrongPercentage = Math.round((wrongAnswers / total) * 100);
-
-        document.getElementById("back-btn").classList.add("hide");
-        saveScoreToCloud(score, total);
-
-        document.getElementById("quiz-screen").innerHTML = `
-            <h2 style="color: var(--text-main); margin-bottom: 5px;">Quiz Completed!</h2>
-            <p style="color: var(--text-muted); font-size: 14px; margin-top: 0; margin-bottom: 25px;">Here is your performance breakdown</p>
-            <div style="width: 160px; height: 160px; border-radius: 50%; margin: 20px auto; box-shadow: 0 8px 24px rgba(0,0,0,0.06); background: conic-gradient(#2a9d8f 0% ${correctPercentage}%, #e76f51 ${correctPercentage}% 100%);"></div>
-            <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 25px; font-size: 14px; font-weight: 500;">
-                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #2a9d8f; display: inline-block;"></span> Correct</div>
-                <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #e76f51; display: inline-block;"></span> Wrong</div>
-            </div>
-            <div class="results-summary" style="border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                <div class="stat-row"><span style="color: var(--text-muted);">Total Questions:</span> <strong style="color: var(--text-main);">${total}</strong></div>
-                <div class="stat-row"><span style="color: var(--text-muted);">Correct Answers:</span> <span style="color: #2a9d8f; font-weight: bold;">${score} (${correctPercentage}%)</span></div>
-                <div class="stat-row"><span style="color: var(--text-muted);">Wrong Answers:</span> <span style="color: #e76f51; font-weight: bold;">${wrongAnswers} (${wrongPercentage}%)</span></div>
-            </div>
-            <button id="next-btn" onclick="location.reload()" style="margin-top: 20px; background-color: var(--button-primary-bg); color: var(--button-primary-text);">Return to Homepage</button>
-        `;
-    }
-}
-
-// Helper function to update state mid-quiz
-function saveCurrentProgressLocally() {
-    if (!currentUser || !currentPaperKey) return;
-    const sessionKey = `quiz_session_${currentUser.uid}_${currentPaperKey}`;
-    const sessionData = {
-        currentIndex: currentQuestionIndex,
-        score: score
-    };
-    localStorage.setItem(sessionKey, JSON.stringify(sessionData));
 }
 
 window.checkAnswer = function(selectedIndex) {
