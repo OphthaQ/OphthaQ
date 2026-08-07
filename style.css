@@ -12,7 +12,7 @@ body {
     background-color: white;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 90%;
     max-width: 450px;
     text-align: center;
@@ -57,23 +57,29 @@ body {
 
 #next-btn:hover {
     background-color: #4338ca;
-}/* New styles for answer feedback */
+}
+
+/* New styles for answer feedback */
 .correct {
-    background-color: #d1fae5 !important; /* Soft green */
+    background-color: #d1fae5 !important;
+    /* Soft green */
     border-color: #10b981 !important;
     color: #065f46;
 }
 
 .wrong {
-    background-color: #fee2e2 !important; /* Soft red */
+    background-color: #fee2e2 !important;
+    /* Soft red */
     border-color: #ef4444 !important;
     color: #991b1b;
-}/* Container updates */
+}
+
+/* Container updates */
 .container {
     background-color: white;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 90%;
     max-width: 450px;
     text-align: center;
@@ -120,23 +126,31 @@ body {
     float: left;
     margin-bottom: 15px;
 }
+
 #back-btn:hover {
     color: #334155;
-}/* Progress Bar Layout */
+}
+
+/* Progress Bar Layout */
 .progress-container {
-    background-color: #e2e8f0; /* Grey background track */
+    background-color: #e2e8f0;
+    /* Grey background track */
     border-radius: 10px;
     height: 12px;
     width: 100%;
     margin-top: 10px;
-    overflow: hidden; /* Keeps the inside bar rounded */
+    overflow: hidden;
+    /* Keeps the inside bar rounded */
 }
 
 #progress-bar {
-    background-color: #10b981; /* Indigo or Green filler color */
+    background-color: #10b981;
+    /* Indigo or Green filler color */
     height: 100%;
-    width: 0%; /* Starts at 0% and is managed by JavaScript */
-    transition: width 0.4s ease-in-out; /* Smooth slide animation */
+    width: 0%;
+    /* Starts at 0% and is managed by JavaScript */
+    transition: width 0.4s ease-in-out;
+    /* Smooth slide animation */
 }
 
 #progress-text {
@@ -145,7 +159,9 @@ body {
     margin-top: 5px;
     margin-bottom: 20px;
     font-weight: 500;
-}/* Results Screen Layout */
+}
+
+/* Results Screen Layout */
 .results-summary {
     margin: 20px 0;
     padding: 15px;
@@ -173,19 +189,25 @@ body {
 .text-danger {
     color: #ef4444;
     font-weight: bold;
-}/* Container to make sure the pie chart doesn't get too large */
+}
+
+/* Container to make sure the pie chart doesn't get too large */
 .chart-container {
     width: 200px;
     height: 200px;
-    margin: 20px auto; /* Centers the chart horizontally */
-}/* Pure CSS Pie Chart Styling */
+    margin: 20px auto;
+    /* Centers the chart horizontally */
+}
+
+/* Pure CSS Pie Chart Styling */
 .css-pie-chart {
     width: 150px;
     height: 150px;
     border-radius: 50%;
     margin: 20px auto;
-    background: conic-gradient(#10b981 0% 100%, #ef4444 0% 100%); /* Placeholder colors */
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5), 0 4px 10px rgba(0,0,0,0.1);
+    background: conic-gradient(#10b981 0% 100%, #ef4444 0% 100%);
+    /* Placeholder colors */
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Legend below the chart */
@@ -196,18 +218,26 @@ body {
     margin-bottom: 20px;
     font-size: 14px;
 }
+
 .legend-item {
     display: flex;
     align-items: center;
     gap: 6px;
 }
+
 .dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
 }
-.dot.green { background-color: #10b981; }
-.dot.red { background-color: #ef4444; }
+
+.dot.green {
+    background-color: #10b981;
+}
+
+.dot.red {
+    background-color: #ef4444;
+}
 
 /* Explanation images loaded from the Google Sheet */
 .explanation-text {
@@ -329,6 +359,7 @@ body {
     0% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
     }
+
     100% {
         box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
     }
@@ -366,7 +397,7 @@ body {
     padding: 18px;
     margin-bottom: 16px;
     text-align: left;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .review-status-badge {
@@ -415,4 +446,112 @@ body {
     font-weight: 600;
 }
 
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
 
+body.dark-mode .container,
+body.dark-mode .modal-card,
+body.dark-mode .results-summary {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode #modal-paper-title,
+body.dark-mode #resume-modal-title,
+body.dark-mode #completed-modal-title,
+body.dark-mode #user-welcome {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .paper-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .paper-card:hover {
+    background-color: #334155 !important;
+    border-color: #818cf8 !important;
+    color: #a5b4fc !important;
+}
+
+body.dark-mode .option-btn {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .option-btn:hover {
+    background-color: #334155 !important;
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode .mode-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .mode-card.selected {
+    border-color: #818cf8 !important;
+    background-color: #312e81 !important;
+}
+
+body.dark-mode .mode-card-header strong {
+    color: #f8fafc !important;
+}
+
+body.dark-mode #auth-header {
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode #timer-settings-box,
+body.dark-mode #resume-info-box,
+body.dark-mode #completed-info-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode #timer-settings-box label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode select {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #explanation-box {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-left-color: #6366f1 !important;
+}
+
+/* Tabs styling in dark mode */
+body.dark-mode #tab-available,
+body.dark-mode #tab-bookmarks {
+    color: #94a3b8 !important;
+    /* Inactive color */
+}
+
+body.dark-mode #tab-available[style*="background-color: rgb(255, 255, 255)"],
+body.dark-mode #tab-available[style*="background-color: #ffffff"],
+body.dark-mode #tab-bookmarks[style*="background-color: rgb(255, 255, 255)"],
+body.dark-mode #tab-bookmarks[style*="background-color: #ffffff"] {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+    /* Active color */
+}
+
+/* Tab container background in dark mode */
+body.dark-mode div[style*="background-color: #f1f5f9"] {
+    background-color: #1e293b !important;
+}

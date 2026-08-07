@@ -1,61 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My MCQ App</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div id="home-screen" class="container">
-        <div id="auth-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
-            <span id="user-welcome" style="font-size: 14px; color: #64748b; font-weight: 500;">Please log in →</span>
-            <button id="login-btn" onclick="loginWithGoogle()" style="background-color: #2c3e50; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Sign In with Google</button>
-            <button id="logout-btn" onclick="logout()" class="hide" style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
+        <div id="auth-header"
+            style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="user-welcome" style="font-size: 14px; color: #64748b; font-weight: 500;">Please log in
+                    →</span>
+                <button id="theme-toggle-btn" onclick="toggleTheme()"
+                    style="background: transparent; border: none; font-size: 18px; cursor: pointer;"
+                    title="Toggle Dark Mode">🌙</button>
+            </div>
+            <div>
+                <button id="login-btn" onclick="loginWithGoogle()"
+                    style="background-color: #2c3e50; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Sign
+                    In with Google</button>
+                <button id="logout-btn" onclick="logout()" class="hide"
+                    style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">Logout</button>
+            </div>
         </div>
 
-        <div style="display: flex; background-color: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 25px; gap: 4px;">
-            <button id="tab-available" onclick="switchTab('available')" style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: #ffffff; color: #2c3e50; transition: all 0.2s;">
+        <div
+            style="display: flex; background-color: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 25px; gap: 4px;">
+            <button id="tab-available" onclick="switchTab('available')"
+                style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: #ffffff; color: #2c3e50; transition: all 0.2s;">
                 Available Papers
             </button>
-            <button id="tab-bookmarks" onclick="switchTab('bookmarks')" style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: transparent; color: #64748b; transition: all 0.2s;">
+            <button id="tab-bookmarks" onclick="switchTab('bookmarks')"
+                style="flex: 1; border: none; padding: 10px 5px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: transparent; color: #64748b; transition: all 0.2s;">
                 Bookmarks 🔖
             </button>
         </div>
 
         <div id="papers-list-container">
-            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Select an Exam Paper</h2>
+            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Select an Exam Paper
+            </h2>
             <div id="papers-list" class="papers-container">
-                </div>
+            </div>
         </div>
 
         <div id="bookmarks-section" class="hide">
-            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Your Bookmarked Questions</h2>
+            <h2 style="font-size: 18px; color: #2c3e50; text-align: left; margin-bottom: 15px;">Your Bookmarked
+                Questions</h2>
             <div id="bookmarks-list" style="display: flex; flex-direction: column; gap: 15px;">
-                </div>
+            </div>
         </div>
     </div>
 
     <div id="quiz-screen" class="container hide">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
             <button id="back-btn" onclick="goToHome()" style="margin: 0;">← Back to Home</button>
-            <div id="quiz-timer-badge" class="hide" style="display: flex; align-items: center; gap: 6px; background: #e0e7ff; color: #3730a3; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; border: 1px solid #c7d2fe;">
+            <div id="quiz-timer-badge" class="hide"
+                style="display: flex; align-items: center; gap: 6px; background: #e0e7ff; color: #3730a3; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; border: 1px solid #c7d2fe;">
                 <span>⏱️</span> <span id="timer-text">00:00</span>
             </div>
-            <button id="bookmark-toggle-btn" onclick="toggleCurrentBookmark()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+            <button id="bookmark-toggle-btn" onclick="toggleCurrentBookmark()"
+                style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
                 <span>🔖</span> Bookmark Question
             </button>
         </div>
-        
+
         <div class="progress-container">
             <div id="progress-bar"></div>
         </div>
         <p id="progress-text">Question 0 of 0</p>
-        
+
         <h2 id="question-text">Question text will go here</h2>
         <img id="question-image" class="hide" alt="Question diagram">
-        
+
         <div class="options-container">
             <button class="option-btn" onclick="checkAnswer(0)">Option 1</button>
             <button class="option-btn" onclick="checkAnswer(1)">Option 2</button>
@@ -86,8 +108,9 @@
     <div id="mode-select-modal" class="modal-overlay hide">
         <div class="modal-card">
             <h3 id="modal-paper-title" style="margin-top: 0; color: #1e293b; font-size: 18px;">Select Exam Mode</h3>
-            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 20px;">Choose how you would like to take this paper:</p>
-            
+            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 20px;">Choose how you would like
+                to take this paper:</p>
+
             <div class="mode-options-grid">
                 <label class="mode-card selected" onclick="selectModeOption('practice')">
                     <input type="radio" name="exam-mode" value="practice" checked style="display:none;">
@@ -95,22 +118,28 @@
                         <span class="mode-icon">📖</span>
                         <strong style="color: #1e293b;">Practice Mode</strong>
                     </div>
-                    <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">Untimed with immediate answer feedback & explanations after every question.</p>
+                    <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">Untimed with immediate answer feedback
+                        & explanations after every question.</p>
                 </label>
-                
+
                 <label class="mode-card" onclick="selectModeOption('timed')">
                     <input type="radio" name="exam-mode" value="timed" style="display:none;">
                     <div class="mode-card-header">
                         <span class="mode-icon">⏱️</span>
                         <strong style="color: #1e293b;">Timed Exam Mode</strong>
                     </div>
-                    <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">Timed exam with a live countdown timer and auto-submission when time expires.</p>
+                    <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">Timed exam with a live countdown timer
+                        and auto-submission when time expires.</p>
                 </label>
             </div>
 
-            <div id="timer-settings-box" class="hide" style="margin-top: 15px; text-align: left; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <label style="font-size: 13px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px;">Exam Duration:</label>
-                <select id="timer-duration-select" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; background: white;">
+            <div id="timer-settings-box" class="hide"
+                style="margin-top: 15px; text-align: left; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label
+                    style="font-size: 13px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px;">Exam
+                    Duration:</label>
+                <select id="timer-duration-select"
+                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; background: white;">
                     <option value="auto" selected>Auto (1.5 min per question)</option>
                     <option value="15">15 Minutes</option>
                     <option value="30">30 Minutes</option>
@@ -120,8 +149,11 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="closeModeModal()" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
-                <button onclick="confirmStartQuiz()" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;">Start Quiz</button>
+                <button onclick="closeModeModal()"
+                    style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+                <button onclick="confirmStartQuiz()"
+                    style="flex: 1; background: #4f46e5; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;">Start
+                    Quiz</button>
             </div>
         </div>
     </div>
@@ -129,21 +161,27 @@
     <!-- Resume Test Modal -->
     <div id="resume-select-modal" class="modal-overlay hide">
         <div class="modal-card">
-            <h3 id="resume-modal-title" style="margin-top: 0; color: #1e293b; font-size: 18px;">Resume Unfinished Exam?</h3>
-            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 15px;">You have a saved test in progress for this paper:</p>
-            
-            <div id="resume-info-box" style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px; color: #334155;">
+            <h3 id="resume-modal-title" style="margin-top: 0; color: #1e293b; font-size: 18px;">Resume Unfinished Exam?
+            </h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 15px;">You have a saved test in
+                progress for this paper:</p>
+
+            <div id="resume-info-box"
+                style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px; color: #334155;">
                 <!-- Populated dynamically by script.js -->
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button onclick="confirmResumeQuiz()" style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button onclick="confirmResumeQuiz()"
+                    style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>▶️</span> Resume Test
                 </button>
-                <button onclick="confirmStartFreshQuiz()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button onclick="confirmStartFreshQuiz()"
+                    style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>🔄</span> Start Fresh Test
                 </button>
-                <button onclick="closeResumeModal()" style="background: transparent; color: #64748b; border: none; padding: 8px; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button onclick="closeResumeModal()"
+                    style="background: transparent; color: #64748b; border: none; padding: 8px; font-size: 13px; cursor: pointer;">Cancel</button>
             </div>
         </div>
     </div>
@@ -152,24 +190,30 @@
     <div id="completed-select-modal" class="modal-overlay hide">
         <div class="modal-card">
             <h3 id="completed-modal-title" style="margin-top: 0; color: #1e293b; font-size: 18px;">Exam Completed</h3>
-            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 15px;">You have already completed this paper:</p>
-            
-            <div id="completed-info-box" style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px; color: #334155;">
+            <p style="font-size: 13px; color: #64748b; margin-top: -5px; margin-bottom: 15px;">You have already
+                completed this paper:</p>
+
+            <div id="completed-info-box"
+                style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px; color: #334155;">
                 <!-- Populated dynamically by script.js -->
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button onclick="confirmReviewCompletedQuiz()" style="background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button onclick="confirmReviewCompletedQuiz()"
+                    style="background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>🔍</span> Review Test Answers
                 </button>
-                <button onclick="confirmRetakeCompletedQuiz()" style="background: #0284c7; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button onclick="confirmRetakeCompletedQuiz()"
+                    style="background: #0284c7; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span>🔄</span> Retake Test
                 </button>
-                <button onclick="closeCompletedModal()" style="background: transparent; color: #64748b; border: none; padding: 8px; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button onclick="closeCompletedModal()"
+                    style="background: transparent; color: #64748b; border: none; padding: 8px; font-size: 13px; cursor: pointer;">Cancel</button>
             </div>
         </div>
     </div>
 
     <script type="module" src="script.js"></script>
 </body>
+
 </html>

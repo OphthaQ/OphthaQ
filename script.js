@@ -7,14 +7,14 @@ import { getFirestore, doc, setDoc, deleteDoc, getDoc, getDocs, collection } fro
 
 // ⚠️ KEEP YOUR EXACT WORKING FIREBASE CONFIG OBJECT STAYS HERE!
 const firebaseConfig = {
-  apiKey: "AIzaSyAPsXLrRm1yWGuVC3kFOBdAW27j5dtcJwg",
-  authDomain: "fico-app-f3cea.firebaseapp.com",
-  databaseURL: "https://fico-app-f3cea-default-rtdb.firebaseio.com",
-  projectId: "fico-app-f3cea",
-  storageBucket: "fico-app-f3cea.firebasestorage.app",
-  messagingSenderId: "825347276766",
-  appId: "1:825347276766:web:40f252b3aea9f3522d274f",
-  measurementId: "G-NMFPPKNLFV"
+    apiKey: "AIzaSyAPsXLrRm1yWGuVC3kFOBdAW27j5dtcJwg",
+    authDomain: "fico-app-f3cea.firebaseapp.com",
+    databaseURL: "https://fico-app-f3cea-default-rtdb.firebaseio.com",
+    projectId: "fico-app-f3cea",
+    storageBucket: "fico-app-f3cea.firebasestorage.app",
+    messagingSenderId: "825347276766",
+    appId: "1:825347276766:web:40f252b3aea9f3522d274f",
+    measurementId: "G-NMFPPKNLFV"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -66,7 +66,7 @@ const paperTitlesMap = {
     iniCetSR: "INICET - SRship exam"
 };
 
-let quizPapers = {}; 
+let quizPapers = {};
 let activeQuestions = [];
 let currentQuestionIndex = 0;
 let score = 0;
@@ -92,13 +92,13 @@ async function fetchQuestionsFromGoogleSheet() {
     try {
         const response = await fetch(GOOGLE_SHEET_CSV_URL);
         const csvText = await response.text();
-        
-        const rows = csvText.split(/\r?\n/).map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)); 
+
+        const rows = csvText.split(/\r?\n/).map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
         quizPapers = {};
 
         for (let i = 1; i < rows.length; i++) {
             const columns = rows[i];
-            if (columns.length < 8 || !columns[0]) continue; 
+            if (columns.length < 8 || !columns[0]) continue;
 
             const paperKey = columns[0].trim();
             const question = columns[1].replace(/^"|"$/g, '').trim();
@@ -174,12 +174,12 @@ async function loadHomepage() {
 
     const papersListDiv = document.getElementById("papers-list");
     if (!papersListDiv) return;
-    papersListDiv.innerHTML = ""; 
+    papersListDiv.innerHTML = "";
 
     for (let key in quizPapers) {
         const paperButton = document.createElement("button");
         paperButton.classList.add("paper-card");
-        
+
         const hasProgress = activeExamsMap[key];
         const isCompleted = completedPapersMap[key];
 
@@ -210,11 +210,11 @@ async function loadHomepage() {
         } else {
             paperButton.innerText = quizPapers[key].title;
         }
-        
-        paperButton.onclick = function() {
+
+        paperButton.onclick = function () {
             startQuiz(key);
         };
-        
+
         papersListDiv.appendChild(paperButton);
     }
 
@@ -224,18 +224,18 @@ async function loadHomepage() {
     });
 }
 
-window.switchTab = function(tabName) {
+window.switchTab = function (tabName) {
     activeTab = tabName;
-    
+
     const availableContainer = document.getElementById("papers-list-container");
     const bookmarksSection = document.getElementById("bookmarks-section");
-    
+
     const tabAvailableBtn = document.getElementById("tab-available");
     const tabBookmarksBtn = document.getElementById("tab-bookmarks");
 
     availableContainer.classList.add("hide");
     bookmarksSection.classList.add("hide");
-    
+
     tabAvailableBtn.style.backgroundColor = "transparent"; tabAvailableBtn.style.color = "#64748b";
     tabBookmarksBtn.style.backgroundColor = "transparent"; tabBookmarksBtn.style.color = "#64748b";
 
@@ -291,7 +291,7 @@ async function loadUserHistory() {
     }
 }
 
-window.reviewHistoryItem = function(paperKey) {
+window.reviewHistoryItem = function (paperKey) {
     const compData = completedPapersMap[paperKey];
     if (!compData || !quizPapers[paperKey]) return;
 
@@ -319,11 +319,11 @@ async function syncBookmarksMap() {
     } catch (e) { console.error(e); }
 }
 
-window.toggleCurrentBookmark = async function() {
+window.toggleCurrentBookmark = async function () {
     if (!currentUser) return alert("Please log in to save bookmarks!");
-    
+
     const questionData = activeQuestions[currentQuestionIndex];
-    const questionId = btoa(unescape(encodeURIComponent(questionData.question))).replace(/=/g, "").substring(0, 50); 
+    const questionId = btoa(unescape(encodeURIComponent(questionData.question))).replace(/=/g, "").substring(0, 50);
     const docRef = doc(db, "users", currentUser.uid, "bookmarks", questionId);
     const btn = document.getElementById("bookmark-toggle-btn");
 
@@ -365,7 +365,7 @@ async function loadBookmarkedQuestions() {
             const data = docSnap.data();
             const card = document.createElement("div");
             card.style = "background-color: #ffffff; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; text-align: left; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);";
-            
+
             let optionsHTML = "";
             data.options.forEach(opt => {
                 const isCorrect = opt === data.correctAnswer;
@@ -401,7 +401,7 @@ async function loadBookmarkedQuestions() {
     } catch (e) { console.error("Error loading bookmarks view layout:", e); }
 }
 
-window.removeBookmarkFromDashboard = async function(id) {
+window.removeBookmarkFromDashboard = async function (id) {
     if (!currentUser) return;
     await deleteDoc(doc(db, "users", currentUser.uid, "bookmarks", id));
     currentBookmarksMap.delete(id);
@@ -411,10 +411,10 @@ window.removeBookmarkFromDashboard = async function(id) {
 // ==========================================
 // 6. MODE SELECTION & TIMER CONTROLLERS
 // ==========================================
-window.selectModeOption = function(mode) {
+window.selectModeOption = function (mode) {
     const cards = document.querySelectorAll(".mode-card");
     cards.forEach(card => card.classList.remove("selected"));
-    
+
     const selectedInput = document.querySelector(`input[name="exam-mode"][value="${mode}"]`);
     if (selectedInput) {
         selectedInput.checked = true;
@@ -429,7 +429,7 @@ window.selectModeOption = function(mode) {
     }
 };
 
-window.closeModeModal = function() {
+window.closeModeModal = function () {
     document.getElementById("mode-select-modal").classList.add("hide");
 };
 
@@ -438,16 +438,16 @@ function openModeModal(paperKey) {
     const modal = document.getElementById("mode-select-modal");
     const modalTitle = document.getElementById("modal-paper-title");
     modalTitle.innerText = quizPapers[paperKey]?.title || "Select Exam Mode";
-    
+
     window.selectModeOption("practice");
     modal.classList.remove("hide");
 }
 
-window.confirmStartQuiz = function() {
+window.confirmStartQuiz = function () {
     const selectedRadio = document.querySelector('input[name="exam-mode"]:checked');
     const mode = selectedRadio ? selectedRadio.value : "practice";
     const durationValue = document.getElementById("timer-duration-select").value;
-    
+
     closeModeModal();
     launchQuiz(selectedPaperKeyForModal, mode, durationValue);
 };
@@ -461,7 +461,7 @@ function openResumeModal(paperKey) {
     const saved = activeExamsMap[paperKey];
     const totalQ = quizPapers[paperKey]?.questions?.length || 0;
     const modeLabel = saved.examMode === "timed" ? "⏱️ Timed Exam Mode" : "📖 Practice Mode";
-    
+
     let timerInfo = "";
     if (saved.examMode === "timed" && saved.timeRemaining) {
         timerInfo = `<br><strong>Time Remaining:</strong> ${formatTimeDisplay(saved.timeRemaining)}`;
@@ -477,16 +477,16 @@ function openResumeModal(paperKey) {
     modal.classList.remove("hide");
 }
 
-window.closeResumeModal = function() {
+window.closeResumeModal = function () {
     document.getElementById("resume-select-modal").classList.add("hide");
 };
 
-window.confirmResumeQuiz = function() {
+window.confirmResumeQuiz = function () {
     closeResumeModal();
     resumeQuiz(selectedPaperKeyForModal);
 };
 
-window.confirmStartFreshQuiz = async function() {
+window.confirmStartFreshQuiz = async function () {
     closeResumeModal();
     await clearActiveExamState(selectedPaperKeyForModal);
     openModeModal(selectedPaperKeyForModal);
@@ -595,15 +595,15 @@ function openCompletedModal(paperKey) {
     modal.classList.remove("hide");
 }
 
-window.closeCompletedModal = function() {
+window.closeCompletedModal = function () {
     document.getElementById("completed-select-modal").classList.add("hide");
 };
 
-window.confirmReviewCompletedQuiz = function() {
+window.confirmReviewCompletedQuiz = function () {
     closeCompletedModal();
     const paperKey = selectedPaperKeyForModal;
     const compData = completedPapersMap[paperKey];
-    
+
     currentPaperKey = paperKey;
     activeQuestions = quizPapers[paperKey].questions;
     score = compData.score || 0;
@@ -616,7 +616,7 @@ window.confirmReviewCompletedQuiz = function() {
     window.renderReviewScreen();
 };
 
-window.confirmRetakeCompletedQuiz = function() {
+window.confirmRetakeCompletedQuiz = function () {
     closeCompletedModal();
     openModeModal(selectedPaperKeyForModal);
 };
@@ -701,7 +701,7 @@ function formatTimeDisplay(seconds) {
 function updateTimerDisplay() {
     const timerText = document.getElementById("timer-text");
     const timerBadge = document.getElementById("quiz-timer-badge");
-    
+
     if (timerText) {
         timerText.innerText = formatTimeDisplay(Math.max(0, timeRemaining));
     }
@@ -737,7 +737,7 @@ function loadQuestion() {
         document.getElementById("question-image"),
         currentQuestion.questionImageUrl
     );
-    
+
     const questionId = btoa(unescape(encodeURIComponent(currentQuestion.question))).replace(/=/g, "").substring(0, 50);
     const btn = document.getElementById("bookmark-toggle-btn");
     if (currentBookmarksMap.has(questionId)) {
@@ -761,14 +761,14 @@ function loadQuestion() {
     document.getElementById("progress-bar").style.width = ((displayedQuestionNumber / totalQuestions) * 100) + "%";
 }
 
-window.checkAnswer = function(selectedIndex) {
+window.checkAnswer = function (selectedIndex) {
     if (hasAnswered) return;
     hasAnswered = true;
     userAnswers[currentQuestionIndex] = selectedIndex;
 
     const currentQuestion = activeQuestions[currentQuestionIndex];
     const optionButtons = document.querySelectorAll(".option-btn");
-    
+
     optionButtons[currentQuestion.correctIndex].classList.add("correct");
 
     if (selectedIndex === currentQuestion.correctIndex) {
@@ -839,7 +839,7 @@ function resetQuizScreenDOM() {
     }
 }
 
-window.renderResultsScreen = function() {
+window.renderResultsScreen = function () {
     stopTimer();
     const total = activeQuestions.length;
     const wrongAnswers = total - score;
@@ -880,7 +880,7 @@ window.renderResultsScreen = function() {
     `;
 }
 
-window.toggleReviewBookmark = async function(idx) {
+window.toggleReviewBookmark = async function (idx) {
     if (!currentUser) return alert("Please log in to save bookmarks!");
 
     const questionData = activeQuestions[idx];
@@ -919,7 +919,7 @@ window.toggleReviewBookmark = async function(idx) {
     }
 };
 
-window.renderReviewScreen = function() {
+window.renderReviewScreen = function () {
     const paperTitle = quizPapers[currentPaperKey]?.title || "Exam Paper";
     const total = activeQuestions.length;
 
@@ -1022,16 +1022,16 @@ window.renderReviewScreen = function() {
             </button>
         </div>
     `;
-    
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-window.nextQuestion = function() {
+window.nextQuestion = function () {
     if (!hasAnswered) return alert("Please select an answer first!");
 
     currentQuestionIndex++;
     saveActiveExamState();
-    
+
     if (currentQuestionIndex < activeQuestions.length) {
         loadQuestion();
     } else {
@@ -1058,7 +1058,7 @@ async function saveScoreToCloud(finalScore, totalQuestions, mode = "practice", t
     } catch (e) { console.error(e); }
 }
 
-window.goToHome = function() {
+window.goToHome = function () {
     if (currentPaperKey && activeQuestions.length > 0 && currentQuestionIndex < activeQuestions.length) {
         saveActiveExamState();
     }
@@ -1072,11 +1072,11 @@ window.goToHome = function() {
 // ==========================================
 // 7. UTILITIES & AUTH MONITOR LISTENERS
 // ==========================================
-window.loginWithGoogle = function() {
+window.loginWithGoogle = function () {
     signInWithPopup(auth, provider).catch((e) => { alert("Login Failed: " + e.message); });
 }
 
-window.logout = function() {
+window.logout = function () {
     signOut(auth);
 }
 
@@ -1099,3 +1099,35 @@ onAuthStateChanged(auth, (user) => {
     switchTab("available");
     loadHomepage();
 });
+
+// ==========================================
+// 8. THEME MANAGEMENT
+// ==========================================
+window.toggleTheme = function () {
+    document.body.classList.toggle("dark-mode");
+    const isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+
+    const themeBtn = document.getElementById("theme-toggle-btn");
+    if (themeBtn) {
+        themeBtn.innerText = isDark ? "🌙" : "☀️";
+    }
+};
+
+// Initialize theme immediately
+(function initTheme() {
+    const savedTheme = localStorage.getItem("theme");
+    const isDark = savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    if (isDark) {
+        document.body.classList.add("dark-mode");
+    }
+
+    // Use setTimeout to ensure DOM elements are parsed if this runs early
+    setTimeout(() => {
+        const themeBtn = document.getElementById("theme-toggle-btn");
+        if (themeBtn) {
+            themeBtn.innerText = isDark ? "🌙" : "☀️";
+        }
+    }, 0);
+})();
