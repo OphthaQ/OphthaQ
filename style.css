@@ -1,11 +1,11 @@
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f0f2f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    padding: 32px 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .quiz-container {
@@ -16,6 +16,10 @@ body {
     width: 90%;
     max-width: 450px;
     text-align: center;
+}
+
+.container {
+    margin: 0 auto;
 }
 
 .options-container {
@@ -204,3 +208,211 @@ body {
 }
 .dot.green { background-color: #10b981; }
 .dot.red { background-color: #ef4444; }
+
+/* Explanation images loaded from the Google Sheet */
+.explanation-text {
+    margin: 6px 0 0;
+}
+
+#question-image,
+#explanation-image,
+.bookmark-question-image,
+.bookmark-explanation-image {
+    display: block;
+    width: 100%;
+    max-height: 360px;
+    height: auto;
+    object-fit: contain;
+    margin-top: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+.bookmark-question-image {
+    max-height: 260px;
+    margin: 0 0 12px;
+}
+
+.bookmark-explanation-image {
+    max-height: 260px;
+}
+
+/* ==========================================
+   MODAL OVERLAY & MODE SELECTION STYLES
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.mode-options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mode-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: block;
+}
+
+.mode-card:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.mode-card.selected {
+    border-color: #4f46e5;
+    background: #eef2ff;
+}
+
+.mode-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+}
+
+.mode-icon {
+    font-size: 18px;
+}
+
+/* ==========================================
+   TIMER BADGE WARNING & URGENT STATES
+   ========================================== */
+#quiz-timer-badge {
+    transition: all 0.3s ease;
+}
+
+#quiz-timer-badge.timer-warning {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #fde68a !important;
+}
+
+#quiz-timer-badge.timer-urgent {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+    animation: pulse-red 1s infinite alternate;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+}
+
+/* ==========================================
+   HISTORY MODE BADGES
+   ========================================== */
+.mode-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.mode-badge.practice {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.mode-badge.timed {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
+/* ==========================================
+   REVIEW TEST SCREEN STYLES
+   ========================================== */
+.review-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+    text-align: left;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.review-status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.review-status-badge.correct {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+.review-status-badge.wrong {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.review-status-badge.skipped {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.review-option {
+    padding: 10px 14px;
+    margin-top: 8px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: #475569;
+}
+
+.review-option.correct-choice {
+    border-color: #86efac;
+    background-color: #f0fdf4;
+    color: #166534;
+    font-weight: 600;
+}
+
+.review-option.user-wrong-choice {
+    border-color: #fca5a5;
+    background-color: #fef2f2;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+
