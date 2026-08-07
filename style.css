@@ -175,7 +175,9 @@ body.test-active {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 90%;
     max-width: 450px;
+    margin: 0 auto;
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* Class to easily hide elements */
@@ -791,4 +793,33 @@ body.dark-mode .results-legend {
 body.dark-mode .results-summary {
     background-color: #1e293b !important;
     border-color: #334155 !important;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 480px) {
+    body {
+        padding: 16px 8px;
+        /* Reduce body padding on small screens */
+    }
+
+    .container {
+        width: 100%;
+        padding: 20px 15px;
+        /* Reduce container inner padding */
+        border-radius: 8px;
+    }
+
+    .paper-card {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .options-container {
+        gap: 8px;
+    }
+
+    .option-btn {
+        padding: 10px;
+        font-size: 14px;
+    }
 }
