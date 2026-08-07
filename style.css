@@ -12,6 +12,11 @@
     }
 }
 
+* {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
 body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(-45deg, #fef9c3, #e0f2fe, #fef08a, #bae6fd);
@@ -22,13 +27,6 @@ body {
     padding: 32px 16px;
     box-sizing: border-box;
     overflow-y: auto;
-    -webkit-tap-highlight-color: transparent;
-}
-
-button,
-a,
-.paper-card {
-    -webkit-tap-highlight-color: transparent;
 }
 
 body.test-active {
