@@ -303,6 +303,7 @@ window.reviewHistoryItem = function (paperKey) {
 
     document.getElementById("home-screen").classList.add("hide");
     document.getElementById("quiz-screen").classList.remove("hide");
+    document.body.classList.add("test-active");
 
     window.renderReviewScreen();
 };
@@ -510,6 +511,7 @@ function resumeQuiz(paperKey) {
 
     document.getElementById("home-screen").classList.add("hide");
     document.getElementById("quiz-screen").classList.remove("hide");
+    document.body.classList.add("test-active");
 
     const timerBadge = document.getElementById("quiz-timer-badge");
 
@@ -612,6 +614,7 @@ window.confirmReviewCompletedQuiz = function () {
 
     document.getElementById("home-screen").classList.add("hide");
     document.getElementById("quiz-screen").classList.remove("hide");
+    document.body.classList.add("test-active");
 
     window.renderReviewScreen();
 };
@@ -644,6 +647,7 @@ function launchQuiz(paperKey, mode, durationSetting) {
 
     document.getElementById("home-screen").classList.add("hide");
     document.getElementById("quiz-screen").classList.remove("hide");
+    document.body.classList.add("test-active");
 
     const timerBadge = document.getElementById("quiz-timer-badge");
 
@@ -729,8 +733,46 @@ function autoSubmitExam() {
     renderResultsScreen();
 }
 
+function updatePaletteUI() {
+    const palette = document.getElementById("question-palette");
+    if (!palette) return;
+
+    palette.innerHTML = "";
+    activeQuestions.forEach((_, i) => {
+        const btn = document.createElement("button");
+        btn.className = "palette-btn";
+        btn.innerText = i + 1;
+
+        if (userAnswers[i] !== null) {
+            btn.classList.add("answered");
+        }
+        if (i === currentQuestionIndex) {
+            btn.classList.add("current");
+        }
+
+        btn.onclick = () => jumpToQuestion(i);
+        palette.appendChild(btn);
+    });
+}
+
+window.jumpToQuestion = function (index) {
+    saveActiveExamState();
+    currentQuestionIndex = index;
+    loadQuestion();
+}
+
+window.confirmSubmitEarly = function () {
+    const unansweredCount = userAnswers.filter(a => a === null).length;
+    if (unansweredCount > 0) {
+        if (confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit the test?`)) {
+            renderResultsScreen();
+        }
+    } else {
+        renderResultsScreen();
+    }
+}
+
 function loadQuestion() {
-    hasAnswered = false;
     const currentQuestion = activeQuestions[currentQuestionIndex];
     document.getElementById("question-text").innerText = currentQuestion.question;
     setOptionalImage(
@@ -749,7 +791,7 @@ function loadQuestion() {
     const optionButtons = document.querySelectorAll(".option-btn");
     optionButtons.forEach((button, index) => {
         button.innerText = currentQuestion.options[index];
-        button.classList.remove("correct", "wrong");
+        button.classList.remove("correct", "wrong", "selected-option");
     });
 
     document.getElementById("explanation-box").classList.add("hide");
@@ -759,6 +801,56 @@ function loadQuestion() {
     const displayedQuestionNumber = currentQuestionIndex + 1;
     document.getElementById("progress-text").innerText = `Question ${displayedQuestionNumber} of ${totalQuestions}`;
     document.getElementById("progress-bar").style.width = ((displayedQuestionNumber / totalQuestions) * 100) + "%";
+
+    updatePaletteUI();
+
+    // Show submit early button and palette only in timed mode
+    const submitBtn = document.getElementById("submit-early-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const palette = document.getElementById("question-palette");
+
+    if (examMode === "practice") {
+        if (palette) palette.style.display = "none";
+        if (submitBtn) submitBtn.style.display = "none";
+    } else {
+        if (palette) palette.style.display = "flex";
+        if (submitBtn && activeQuestions.length > 0) submitBtn.style.display = "block";
+    }
+
+    if (userAnswers[currentQuestionIndex] !== null) {
+        // Question was already answered
+        hasAnswered = true;
+        nextBtn.innerText = "Next Question ➡️";
+
+        const selectedIndex = userAnswers[currentQuestionIndex];
+        const correctIndex = currentQuestion.correctIndex;
+
+        if (examMode === "practice") {
+            optionButtons[correctIndex].classList.add("correct");
+            if (selectedIndex !== correctIndex) {
+                optionButtons[selectedIndex].classList.add("wrong");
+            }
+
+            document.getElementById("explanation-text").innerText = currentQuestion.explanation;
+            setOptionalImage(
+                document.getElementById("explanation-image"),
+                currentQuestion.explanationImageUrl
+            );
+            document.getElementById("explanation-box").classList.remove("hide");
+        } else {
+            optionButtons[selectedIndex].classList.add("selected-option");
+        }
+    } else {
+        // Question is unanswered
+        hasAnswered = false;
+        if (examMode === "practice") {
+            nextBtn.innerText = "Next Question ➡️";
+        } else {
+            nextBtn.innerText = "Skip ⏭";
+        }
+        document.getElementById("explanation-box").classList.add("hide");
+        setOptionalImage(document.getElementById("explanation-image"), "");
+    }
 }
 
 window.checkAnswer = function (selectedIndex) {
@@ -769,21 +861,32 @@ window.checkAnswer = function (selectedIndex) {
     const currentQuestion = activeQuestions[currentQuestionIndex];
     const optionButtons = document.querySelectorAll(".option-btn");
 
-    optionButtons[currentQuestion.correctIndex].classList.add("correct");
+    if (examMode === "practice") {
+        optionButtons[currentQuestion.correctIndex].classList.add("correct");
 
-    if (selectedIndex === currentQuestion.correctIndex) {
-        score++;
+        if (selectedIndex === currentQuestion.correctIndex) {
+            score++;
+        } else {
+            optionButtons[selectedIndex].classList.add("wrong");
+        }
+
+        document.getElementById("explanation-text").innerText = currentQuestion.explanation;
+        setOptionalImage(
+            document.getElementById("explanation-image"),
+            currentQuestion.explanationImageUrl
+        );
+
+        document.getElementById("explanation-box").classList.remove("hide");
     } else {
-        optionButtons[selectedIndex].classList.add("wrong");
+        optionButtons[selectedIndex].classList.add("selected-option");
+        if (selectedIndex === currentQuestion.correctIndex) {
+            score++;
+        }
     }
 
-    document.getElementById("explanation-text").innerText = currentQuestion.explanation;
-    setOptionalImage(
-        document.getElementById("explanation-image"),
-        currentQuestion.explanationImageUrl
-    );
+    document.getElementById("next-btn").innerText = "Next Question ➡️";
+    updatePaletteUI();
 
-    document.getElementById("explanation-box").classList.remove("hide");
     saveActiveExamState();
 };
 
@@ -801,7 +904,14 @@ const ORIGINAL_QUIZ_SCREEN_HTML = `
         <div class="progress-container">
             <div id="progress-bar"></div>
         </div>
-        <p id="progress-text">Question 0 of 0</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p id="progress-text" style="margin-bottom: 5px;">Question 0 of 0</p>
+        </div>
+        
+        <!-- Question Palette -->
+        <div id="question-palette" style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; scrollbar-width: thin;">
+            <!-- Palette buttons will be generated here -->
+        </div>
         
         <h2 id="question-text">Question text will go here</h2>
         <img id="question-image" class="hide" alt="Question diagram">
@@ -829,7 +939,10 @@ const ORIGINAL_QUIZ_SCREEN_HTML = `
             <img id="explanation-image" class="hide" alt="Explanation diagram">
         </div>
 
-        <button id="next-btn" onclick="nextQuestion()">Next Question</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="submit-early-btn" onclick="confirmSubmitEarly()" style="background-color: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; flex: 1; display: none;">Submit Test</button>
+            <button id="next-btn" onclick="nextQuestion()" style="flex: 2;">Skip ⏭</button>
+        </div>
 `;
 
 function resetQuizScreenDOM() {
@@ -842,9 +955,12 @@ function resetQuizScreenDOM() {
 window.renderResultsScreen = function () {
     stopTimer();
     const total = activeQuestions.length;
-    const wrongAnswers = total - score;
-    const correctPercentage = Math.round((score / total) * 100);
-    const wrongPercentage = Math.round((wrongAnswers / total) * 100);
+    const unansweredCount = userAnswers.filter(a => a === null).length;
+    const wrongAnswers = total - score - unansweredCount;
+
+    let correctPct = Math.round((score / total) * 100);
+    let wrongPct = Math.round((wrongAnswers / total) * 100);
+    let unansweredPct = 100 - correctPct - wrongPct;
 
     const timeSpentSeconds = Math.max(1, Math.round((Date.now() - (startTimeStamp || Date.now())) / 1000));
     const timeSpentFormatted = formatTimeDisplay(timeSpentSeconds);
@@ -854,18 +970,27 @@ window.renderResultsScreen = function () {
     const modeLabel = examMode === "timed" ? "⏱️ Timed Mode" : "📖 Practice Mode";
 
     document.getElementById("quiz-screen").innerHTML = `
-        <h2 style="color: #2c3e50; margin-bottom: 5px;">Quiz Completed!</h2>
-        <p style="color: #7f8c8d; font-size: 14px; margin-top: 0; margin-bottom: 15px;">Here is your performance breakdown</p>
-        <span class="mode-badge ${examMode}" style="font-size: 13px; padding: 4px 12px; margin-bottom: 15px;">${modeLabel}</span>
-        <div style="width: 160px; height: 160px; border-radius: 50%; margin: 20px auto; box-shadow: 0 8px 24px rgba(0,0,0,0.06); background: conic-gradient(#2a9d8f 0% ${correctPercentage}%, #e76f51 ${correctPercentage}% 100%);"></div>
-        <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 25px; font-size: 14px; font-weight: 500;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #2c3e50;"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #2a9d8f; display: inline-block;"></span> Correct</div>
-            <div style="display: flex; align-items: center; gap: 8px; color: #2c3e50;"><span style="width: 12px; height: 12px; border-radius: 50%; background-color: #e76f51; display: inline-block;"></span> Wrong</div>
+        <h2 class="results-title">Quiz Completed!</h2>
+        <p class="results-subtitle">Here is your performance breakdown</p>
+        <span class="mode-badge ${examMode}" style="font-size: 13px; padding: 4px 12px; margin-bottom: 15px; display: inline-block;">${modeLabel}</span>
+        
+        <div class="results-chart">
+            <div class="results-pie" style="background: conic-gradient(var(--chart-correct) 0% ${correctPct}%, var(--chart-wrong) ${correctPct}% ${correctPct + wrongPct}%, var(--chart-unanswered) ${correctPct + wrongPct}% 100%);">
+                <div class="results-donut-inner">${correctPct}%</div>
+            </div>
         </div>
-        <div class="results-summary" style="border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+        
+        <div class="results-legend">
+            <div class="legend-item"><span class="legend-color correct-color"></span> Correct</div>
+            <div class="legend-item"><span class="legend-color wrong-color"></span> Wrong</div>
+            <div class="legend-item"><span class="legend-color unanswered-color"></span> Unanswered</div>
+        </div>
+        
+        <div class="results-summary">
             <div class="stat-row"><span>Total Questions:</span> <strong>${total}</strong></div>
-            <div class="stat-row"><span>Correct Answers:</span> <span style="color: #2a9d8f; font-weight: bold;">${score} (${correctPercentage}%)</span></div>
-            <div class="stat-row"><span>Wrong Answers:</span> <span style="color: #e76f51; font-weight: bold;">${wrongAnswers} (${wrongPercentage}%)</span></div>
+            <div class="stat-row"><span>Correct Answers:</span> <span class="stat-correct">${score} (${correctPct}%)</span></div>
+            <div class="stat-row"><span>Wrong Answers:</span> <span class="stat-wrong">${wrongAnswers} (${wrongPct}%)</span></div>
+            <div class="stat-row"><span>Unanswered:</span> <span class="stat-unanswered">${unansweredCount} (${unansweredPct}%)</span></div>
             <div class="stat-row"><span>Time Taken:</span> <strong>${timeSpentFormatted}</strong></div>
         </div>
 
@@ -919,6 +1044,21 @@ window.toggleReviewBookmark = async function (idx) {
     }
 };
 
+window.filterReviewCards = function (status) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`filter-btn-${status}`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const cards = document.querySelectorAll('.review-card');
+    cards.forEach(card => {
+        if (status === 'all' || card.dataset.status === status) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+};
+
 window.renderReviewScreen = function () {
     const paperTitle = quizPapers[currentPaperKey]?.title || "Exam Paper";
     const total = activeQuestions.length;
@@ -938,11 +1078,15 @@ window.renderReviewScreen = function () {
         const bookmarkBtnText = isBookmarked ? "<span>⭐</span> Bookmarked" : "<span>🔖</span> Bookmark";
 
         let statusBadgeHTML = "";
+        let cardStatus = "wrong";
         if (isCorrect) {
+            cardStatus = "correct";
             statusBadgeHTML = `<span class="review-status-badge correct">✓ Correct</span>`;
         } else if (isSkipped) {
+            cardStatus = "unanswered";
             statusBadgeHTML = `<span class="review-status-badge skipped">⚠️ Unanswered</span>`;
         } else {
+            cardStatus = "wrong";
             statusBadgeHTML = `<span class="review-status-badge wrong">✗ Incorrect</span>`;
         }
 
@@ -981,7 +1125,7 @@ window.renderReviewScreen = function () {
             : "";
 
         reviewCardsHTML += `
-            <div class="review-card">
+            <div class="review-card" data-status="${cardStatus}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <strong style="font-size: 13px; color: #64748b;">Question ${idx + 1} of ${total}</strong>
@@ -1011,6 +1155,13 @@ window.renderReviewScreen = function () {
         <h2 style="font-size: 20px; color: #1e293b; margin-bottom: 5px; text-align: left;">Question Breakdown</h2>
         <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px; text-align: left;">Review your submitted answers and explanations below:</p>
 
+        <div class="review-filters">
+            <button id="filter-btn-all" class="filter-btn active" onclick="filterReviewCards('all')">All</button>
+            <button id="filter-btn-correct" class="filter-btn" onclick="filterReviewCards('correct')">Correct</button>
+            <button id="filter-btn-wrong" class="filter-btn" onclick="filterReviewCards('wrong')">Incorrect</button>
+            <button id="filter-btn-unanswered" class="filter-btn" onclick="filterReviewCards('unanswered')">Unanswered</button>
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 12px;">
             ${reviewCardsHTML}
         </div>
@@ -1027,7 +1178,9 @@ window.renderReviewScreen = function () {
 };
 
 window.nextQuestion = function () {
-    if (!hasAnswered) return alert("Please select an answer first!");
+    if (examMode === "practice" && !hasAnswered) {
+        return alert("In Practice Mode, you must answer the question before moving to the next one!");
+    }
 
     currentQuestionIndex++;
     saveActiveExamState();
@@ -1035,7 +1188,18 @@ window.nextQuestion = function () {
     if (currentQuestionIndex < activeQuestions.length) {
         loadQuestion();
     } else {
-        renderResultsScreen();
+        const unansweredCount = userAnswers.filter(a => a === null).length;
+        if (unansweredCount > 0) {
+            if (confirm(`You have ${unansweredCount} unanswered questions. Are you sure you want to submit the test?`)) {
+                renderResultsScreen();
+            } else {
+                // Go back to the first unanswered question
+                currentQuestionIndex = userAnswers.indexOf(null);
+                loadQuestion();
+            }
+        } else {
+            renderResultsScreen();
+        }
     }
 };
 
@@ -1066,6 +1230,7 @@ window.goToHome = function () {
     resetQuizScreenDOM();
     document.getElementById("quiz-screen").classList.add("hide");
     document.getElementById("home-screen").classList.remove("hide");
+    document.body.classList.remove("test-active");
     loadHomepage();
 };
 

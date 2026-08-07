@@ -73,7 +73,15 @@
         <div class="progress-container">
             <div id="progress-bar"></div>
         </div>
-        <p id="progress-text">Question 0 of 0</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p id="progress-text" style="margin-bottom: 5px;">Question 0 of 0</p>
+        </div>
+
+        <!-- Question Palette -->
+        <div id="question-palette"
+            style="display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; scrollbar-width: thin;">
+            <!-- Palette buttons will be generated here -->
+        </div>
 
         <h2 id="question-text">Question text will go here</h2>
         <img id="question-image" class="hide" alt="Question diagram">
@@ -101,7 +109,12 @@
             <img id="explanation-image" class="hide" alt="Explanation diagram">
         </div>
 
-        <button id="next-btn" onclick="nextQuestion()">Next Question</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button id="submit-early-btn" onclick="confirmSubmitEarly()"
+                style="background-color: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; flex: 1; display: none;">Submit
+                Test</button>
+            <button id="next-btn" onclick="nextQuestion()" style="flex: 2;">Skip ⏭</button>
+        </div>
     </div>
 
     <!-- Mode Selection Modal -->
