@@ -1223,7 +1223,8 @@ async function saveScoreToCloud(finalScore, totalQuestions, mode = "practice", t
 }
 
 window.goToHome = function () {
-    if (currentPaperKey && activeQuestions.length > 0 && currentQuestionIndex < activeQuestions.length) {
+    const isQuizActive = document.getElementById("question-text") !== null;
+    if (isQuizActive && currentPaperKey && activeQuestions.length > 0) {
         saveActiveExamState();
     }
     stopTimer();
