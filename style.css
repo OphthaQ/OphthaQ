@@ -18,6 +18,10 @@
 }
 
 body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
     font-family: 'Arial', sans-serif;
     background: linear-gradient(-45deg, #fef9c3, #e0f2fe, #fef08a, #bae6fd);
     background-size: 400% 400%;
@@ -827,4 +831,60 @@ body.dark-mode .results-summary {
         padding: 10px;
         font-size: 14px;
     }
+}
+
+/* ========================================== */
+/* DARK MODE FOR PROFILE SCREEN */
+/* ========================================== */
+body.dark-mode #profile-screen h3,
+body.dark-mode #profile-screen label,
+body.dark-mode #profile-screen span,
+body.dark-mode #profile-screen li {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #profile-name-input {
+    background-color: #1e293b !important;
+    color: white !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #profile-screen div[style*="background: #f8fafc;"] {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #profile-screen div[style*="border: 1px solid #cbd5e1"] {
+    border-color: #334155 !important;
+}
+
+body.dark-mode #profile-subscription-status {
+    color: #f8fafc !important;
+}
+
+body.dark-mode #profile-subscription-status span {
+    color: inherit !important;
+}
+
+body.dark-mode #profile-screen button {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode #profile-upgrade-btn {
+    color: white !important;
+}
+
+body.dark-mode .back-nav-btn {
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .solid-nav-btn {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .review-title-text {
+    color: #f1f5f9 !important;
 }

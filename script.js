@@ -2,8 +2,9 @@
 // 1. FIREBASE ARCHITECTURE & INITIALIZATION
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, deleteDoc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
 // ⚠️ KEEP YOUR EXACT WORKING FIREBASE CONFIG OBJECT STAYS HERE!
 const firebaseConfig = {
@@ -20,6 +21,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app);
+connectFunctionsEmulator(functions, "localhost", 5001);
 const provider = new GoogleAuthProvider();
 
 // Only allow regular web image links from the spreadsheet.
@@ -53,27 +56,62 @@ function setOptionalImage(imageElement, sourceUrl) {
 // ==========================================
 // 2. DYNAMIC SHEET CONFIGURATION & SYSTEM STATE
 // ==========================================
-const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTlH8ADzilx4j2pxVoBGaiptFK9fhhFxa3X2vk2u75KUsZjWFua-vQ5mo-Zt5OjUje8rsyeiFtawLB/pub?gid=1841373573&single=true&output=csv";
+const BASE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTlH8ADzilx4j2pxVoBGaiptFK9fhhFxa3X2vk2u75KUsZjWFua-vQ5mo-Zt5OjUje8rsyeiFtawLB/pub?single=true&output=csv&gid=";
 
-const paperTitlesMap = {
-    ficoA: "FICO part A",
-    ficoB: "FICO part B",
-    ficoC: "FICO part C",
-    ficoD: "FICO part D",
-    frcoPhthal1: "FRCOphthal 1",
-    frcoPhthal2: "FRCOphthal 2",
-    iniSS: "INI - SS",
-    iniCetSR: "INICET - SRship exam"
-};
+// The 3-tier configuration for Categories -> Subcategories -> Papers
+const appStructure = [
+    {
+        id: "basics",
+        title: "Basics and visual sciences",
+        subcategories: [
+            { id: "ico", title: "ICO oriented", gid: "1809191004" }, // ICO A
+            { id: "rco", title: "RCO oriented", gid: "1811206417" } // RCO 1 basic
+        ]
+    },
+    {
+        id: "optics",
+        title: "Optics and Refraction",
+        subcategories: [
+            { id: "ico", title: "ICO oriented", gid: "1224324948" }, // ICO B
+            { id: "rco", title: "RCO oriented", gid: "1882977709" } // RCO 1 optics
+        ]
+    },
+    {
+        id: "clinical",
+        title: "Clinical ophthalmology",
+        subcategories: [
+            { id: "ico", title: "ICO oriented", gid: "1104654783" }, // ICO C
+            { id: "rco", title: "RCO oriented", gid: "279021325" }, // RCO 2
+            { id: "clinical_adv", title: "Clinical advanced", gid: "2003570964" } // ICO D
+        ]
+    },
+    {
+        id: "inicet",
+        title: "INICET - SS",
+        subcategories: [
+            { id: "all", title: "All Papers", gid: "1974187783" } // INI - SS
+        ]
+    },
+    {
+        id: "senior",
+        title: "Senior Residency exams",
+        subcategories: [
+            { id: "all", title: "All Papers", gid: "2121725938" } // Senior residency
+        ]
+    }
+];
 
 let quizPapers = {};
+let allPapersMap = {};
 let activeQuestions = [];
 let currentQuestionIndex = 0;
 let score = 0;
 let hasAnswered = false;
 let currentUser = null;
-let currentPaperKey = "";
-let selectedPaperKeyForModal = "";
+let currentPaperKey = null;
+
+let isPremium = false; // FREEMIUM LOGIC
+let selectedPaperKeyForModal = null;
 let examMode = "practice"; // "practice" | "timed"
 let timeRemaining = 0;
 let totalExamDuration = 0;
@@ -90,46 +128,78 @@ let currentBookmarksMap = new Set();
 // ==========================================
 async function fetchQuestionsFromGoogleSheet() {
     try {
-        const response = await fetch(GOOGLE_SHEET_CSV_URL);
-        const csvText = await response.text();
+        quizPapers = {}; // Will hold the nested structure
+        allPapersMap = {}; // Flat lookup map for quick access by paperKey
 
-        const rows = csvText.split(/\r?\n/).map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
-        quizPapers = {};
+        // Fetch all subcategories across all categories in parallel
+        const fetchPromises = [];
 
-        for (let i = 1; i < rows.length; i++) {
-            const columns = rows[i];
-            if (columns.length < 8 || !columns[0]) continue;
+        appStructure.forEach((category) => {
+            // Initialize this category
+            quizPapers[category.id] = {
+                title: category.title,
+                subcategories: {}
+            };
 
-            const paperKey = columns[0].trim();
-            const question = columns[1].replace(/^"|"$/g, '').trim();
-            const option1 = columns[2].replace(/^"|"$/g, '').trim();
-            const option2 = columns[3].replace(/^"|"$/g, '').trim();
-            const option3 = columns[4].replace(/^"|"$/g, '').trim();
-            const option4 = columns[5].replace(/^"|"$/g, '').trim();
-            const correctIndex = parseInt(columns[6].trim(), 10);
-            const explanation = columns[7].replace(/^"|"$/g, '').trim();
-            // Column I: leave blank when an explanation has no image.
-            const explanationImageUrl = (columns[8] || '').replace(/^"|"$/g, '').trim();
-            // Column J: leave blank when a question has no image.
-            const questionImageUrl = (columns[9] || '').replace(/^"|"$/g, '').trim();
-
-            if (!quizPapers[paperKey]) {
-                quizPapers[paperKey] = {
-                    title: paperTitlesMap[paperKey] || paperKey,
-                    questions: []
+            category.subcategories.forEach((subcategory) => {
+                // Initialize this subcategory
+                quizPapers[category.id].subcategories[subcategory.id] = {
+                    title: subcategory.title,
+                    papers: {}
                 };
-            }
 
-            quizPapers[paperKey].questions.push({
-                question: question,
-                options: [option1, option2, option3, option4],
-                correctIndex: correctIndex,
-                explanation: explanation,
-                explanationImageUrl: explanationImageUrl,
-                questionImageUrl: questionImageUrl
+                const promise = fetch(BASE_CSV_URL + subcategory.gid)
+                    .then(response => response.text())
+                    .then(csvText => {
+                        const rows = csvText.split(/\r?\n/).map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
+
+                        for (let i = 1; i < rows.length; i++) {
+                            const columns = rows[i];
+                            if (columns.length < 8 || !columns[0]) continue;
+
+                            const paperName = columns[0].replace(/^"|"$/g, '').trim();
+                            // Unique key: category_subcategory_paperName
+                            const paperKey = `${category.id}_${subcategory.id}_${paperName.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+                            const question = columns[1].replace(/^"|"$/g, '').trim();
+                            const option1 = columns[2].replace(/^"|"$/g, '').trim();
+                            const option2 = columns[3].replace(/^"|"$/g, '').trim();
+                            const option3 = columns[4].replace(/^"|"$/g, '').trim();
+                            const option4 = columns[5].replace(/^"|"$/g, '').trim();
+                            const correctIndex = parseInt(columns[6].trim(), 10);
+                            const explanation = columns[7].replace(/^"|"$/g, '').trim();
+                            const explanationImageUrl = (columns[8] || '').replace(/^"|"$/g, '').trim();
+                            const questionImageUrl = (columns[9] || '').replace(/^"|"$/g, '').trim();
+
+                            const subcatData = quizPapers[category.id].subcategories[subcategory.id];
+
+                            if (!subcatData.papers[paperKey]) {
+                                const newPaper = {
+                                    title: paperName,
+                                    questions: [],
+                                    categoryId: category.id,
+                                    subcategoryId: subcategory.id
+                                };
+                                subcatData.papers[paperKey] = newPaper;
+                                allPapersMap[paperKey] = newPaper; // Flat map for quick access
+                            }
+
+                            subcatData.papers[paperKey].questions.push({
+                                question: question,
+                                options: [option1, option2, option3, option4],
+                                correctIndex: correctIndex,
+                                explanation: explanation,
+                                explanationImageUrl: explanationImageUrl,
+                                questionImageUrl: questionImageUrl
+                            });
+                        }
+                    });
+                fetchPromises.push(promise);
             });
-        }
-        console.log("Database initialized successfully from Google Sheets!", quizPapers);
+        });
+
+        await Promise.all(fetchPromises);
+        console.log("Database initialized successfully with nested categories!", quizPapers);
     } catch (error) {
         console.error("Failed to load spreadsheet elements:", error);
     }
@@ -172,57 +242,200 @@ async function loadHomepage() {
     await fetchActiveExamsMap();
     await fetchCompletedPapersMap();
 
-    const papersListDiv = document.getElementById("papers-list");
-    if (!papersListDiv) return;
-    papersListDiv.innerHTML = "";
-
-    for (let key in quizPapers) {
-        const paperButton = document.createElement("button");
-        paperButton.classList.add("paper-card");
-
-        const hasProgress = activeExamsMap[key];
-        const isCompleted = completedPapersMap[key];
-
-        if (hasProgress) {
-            const savedData = activeExamsMap[key];
-            const qNum = (savedData.currentQuestionIndex || 0) + 1;
-            const totalQ = quizPapers[key]?.questions?.length || 0;
-            const modeIcon = savedData.examMode === "timed" ? "⏱️" : "📖";
-            paperButton.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <span>${quizPapers[key].title}</span>
-                    <span style="font-size: 11px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
-                        ⏳ In Progress (${modeIcon} Q${qNum}/${totalQ})
-                    </span>
-                </div>
-            `;
-        } else if (isCompleted) {
-            const compData = completedPapersMap[key];
-            const modeIcon = compData.mode === "timed" ? "⏱️" : "📖";
-            paperButton.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <span>${quizPapers[key].title}</span>
-                    <span style="font-size: 11px; background: #e6f4ea; color: #166534; border: 1px solid #86efac; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
-                        ✓ Completed (${modeIcon} ${compData.score}/${compData.total})
-                    </span>
-                </div>
-            `;
-        } else {
-            paperButton.innerText = quizPapers[key].title;
-        }
-
-        paperButton.onclick = function () {
-            startQuiz(key);
-        };
-
-        papersListDiv.appendChild(paperButton);
-    }
+    window.renderCategories(); // Render the categories view initially
 
     syncBookmarksMap().then(() => {
         loadUserHistory();
         loadBookmarkedQuestions();
     });
 }
+
+window.renderCategories = function () {
+    const papersListDiv = document.getElementById("papers-list");
+    const backBtn = document.getElementById("back-to-categories-container");
+    const titleText = document.getElementById("papers-list-title");
+
+    if (!papersListDiv) return;
+    papersListDiv.innerHTML = "";
+
+    if (backBtn) backBtn.classList.add("hide");
+    if (titleText) titleText.innerText = "Select a Category";
+
+    // Loop over the Categories
+    for (let categoryId in quizPapers) {
+        const categoryData = quizPapers[categoryId];
+        const categoryButton = document.createElement("button");
+        categoryButton.classList.add("paper-card");
+
+        let paperCount = 0;
+        for (let subId in categoryData.subcategories) {
+            paperCount += Object.keys(categoryData.subcategories[subId].papers).length;
+        }
+
+        categoryButton.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="font-size: 16px; font-weight: 600;">${categoryData.title}</span>
+                <span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;">${paperCount} Papers</span>
+            </div>
+        `;
+
+        categoryButton.onclick = function () {
+            window.renderSubcategories(categoryId);
+        };
+
+        papersListDiv.appendChild(categoryButton);
+    }
+};
+
+window.renderSubcategories = function (categoryId) {
+    const papersListDiv = document.getElementById("papers-list");
+    const backBtn = document.getElementById("back-to-categories-container");
+    const titleText = document.getElementById("papers-list-title");
+
+    if (!papersListDiv) return;
+    papersListDiv.innerHTML = "";
+
+    const categoryData = quizPapers[categoryId];
+
+    if (backBtn) {
+        backBtn.classList.remove("hide");
+        // Back button goes to Categories
+        backBtn.innerHTML = `<button class="back-nav-btn" onclick="renderCategories()" style="background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569;">← Back to Categories</button>`;
+    }
+    if (titleText) titleText.innerText = categoryData.title;
+
+    for (let subId in categoryData.subcategories) {
+        const subData = categoryData.subcategories[subId];
+
+        // Skip rendering the subcategory if it is just a placeholder "all" (e.g. INICET)
+        // Instead, just render the papers directly for that category!
+        if (subId === "all") {
+            window.renderPapersForSubcategory(categoryId, subId, true);
+            return;
+        }
+
+        const subButton = document.createElement("button");
+        subButton.classList.add("paper-card");
+
+        const paperCount = Object.keys(subData.papers).length;
+
+        subButton.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="font-size: 16px; font-weight: 600;">${subData.title}</span>
+                <span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 12px;">${paperCount} Papers</span>
+            </div>
+        `;
+
+        subButton.onclick = function () {
+            window.renderPapersForSubcategory(categoryId, subId, false);
+        };
+
+        papersListDiv.appendChild(subButton);
+    }
+};
+
+window.renderPapersForSubcategory = function (categoryId, subcategoryId, fromCategoryLevel) {
+    const papersListDiv = document.getElementById("papers-list");
+    const backBtn = document.getElementById("back-to-categories-container");
+    const titleText = document.getElementById("papers-list-title");
+
+    if (!papersListDiv) return;
+    papersListDiv.innerHTML = "";
+
+    const categoryData = quizPapers[categoryId];
+    const subData = categoryData.subcategories[subcategoryId];
+
+    if (backBtn) {
+        backBtn.classList.remove("hide");
+        if (fromCategoryLevel) {
+            backBtn.innerHTML = `<button class="back-nav-btn" onclick="renderCategories()" style="background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569;">← Back to Categories</button>`;
+        } else {
+            backBtn.innerHTML = `<button class="back-nav-btn" onclick="renderSubcategories('${categoryId}')" style="background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569;">← Back to ${categoryData.title}</button>`;
+        }
+    }
+
+    if (titleText) {
+        titleText.innerText = fromCategoryLevel ? categoryData.title : `${categoryData.title} ➔ ${subData.title}`;
+    }
+
+    for (let paperKey in subData.papers) {
+        const paperData = subData.papers[paperKey];
+        const paperButton = document.createElement("button");
+        paperButton.classList.add("paper-card");
+
+        const hasProgress = activeExamsMap[paperKey];
+        const isCompleted = completedPapersMap[paperKey];
+
+        // Freemium check: Only the very first paper in basics_ico is free.
+        let isFreePaper = false;
+        if (categoryId === appStructure[0].id && subcategoryId === appStructure[0].subcategories[0].id) {
+            const firstPaperKey = Object.keys(subData.papers)[0];
+            if (paperKey === firstPaperKey) {
+                isFreePaper = true;
+            }
+        }
+
+        const isLocked = !isPremium && !isFreePaper;
+
+        if (isLocked) {
+            paperButton.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; opacity: 0.7;">
+                    <span>${paperData.title}</span>
+                    <span style="font-size: 11px; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                        🔒 Premium
+                    </span>
+                </div>
+            `;
+            paperButton.onclick = function () {
+                window.handleRazorpayCheckout();
+            };
+        } else if (hasProgress) {
+            const savedData = activeExamsMap[paperKey];
+            const qNum = (savedData.currentQuestionIndex || 0) + 1;
+            const totalQ = paperData.questions?.length || 0;
+            const modeIcon = savedData.examMode === "timed" ? "⏱️" : "📖";
+            paperButton.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>${paperData.title}</span>
+                    <span style="font-size: 11px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                        ⏳ In Progress (${modeIcon} Q${qNum}/${totalQ})
+                    </span>
+                </div>
+            `;
+            paperButton.onclick = function () {
+                startQuiz(paperKey);
+            };
+        } else if (isCompleted) {
+            const compData = completedPapersMap[paperKey];
+            const modeIcon = compData.mode === "timed" ? "⏱️" : "📖";
+            paperButton.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>${paperData.title}</span>
+                    <span style="font-size: 11px; background: #e6f4ea; color: #166534; border: 1px solid #86efac; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                        ✓ Completed (${modeIcon} ${compData.score}/${compData.total})
+                    </span>
+                </div>
+            `;
+            paperButton.onclick = function () {
+                startQuiz(paperKey);
+            };
+        } else {
+            // Free paper or premium user
+            const tag = (isFreePaper && !isPremium) ? `<span style="font-size: 11px; background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 12px; font-weight: 600;">🎁 Free</span>` : ``;
+            paperButton.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>${paperData.title}</span>
+                    ${tag}
+                </div>
+            `;
+            paperButton.onclick = function () {
+                startQuiz(paperKey);
+            };
+        }
+
+        papersListDiv.appendChild(paperButton);
+    }
+};
 
 window.switchTab = function (tabName) {
     activeTab = tabName;
@@ -293,10 +506,10 @@ async function loadUserHistory() {
 
 window.reviewHistoryItem = function (paperKey) {
     const compData = completedPapersMap[paperKey];
-    if (!compData || !quizPapers[paperKey]) return;
+    if (!compData || !allPapersMap[paperKey]) return;
 
     currentPaperKey = paperKey;
-    activeQuestions = quizPapers[paperKey].questions;
+    activeQuestions = allPapersMap[paperKey].questions;
     score = compData.score || 0;
     examMode = compData.mode || "practice";
     userAnswers = compData.userAnswers || new Array(activeQuestions.length).fill(null);
@@ -335,7 +548,7 @@ window.toggleCurrentBookmark = async function () {
         btn.querySelector("span").innerText = "🔖";
     } else {
         await setDoc(docRef, {
-            paperTitle: quizPapers[currentPaperKey]?.title || currentPaperKey,
+            paperTitle: allPapersMap[currentPaperKey]?.title || currentPaperKey,
             questionText: questionData.question,
             options: questionData.options,
             correctAnswer: questionData.options[questionData.correctIndex],
@@ -438,7 +651,7 @@ function openModeModal(paperKey) {
     selectedPaperKeyForModal = paperKey;
     const modal = document.getElementById("mode-select-modal");
     const modalTitle = document.getElementById("modal-paper-title");
-    modalTitle.innerText = quizPapers[paperKey]?.title || "Select Exam Mode";
+    modalTitle.innerText = allPapersMap[paperKey]?.title || "Select Exam Mode";
 
     window.selectModeOption("practice");
     modal.classList.remove("hide");
@@ -460,7 +673,7 @@ function openResumeModal(paperKey) {
     const infoBox = document.getElementById("resume-info-box");
 
     const saved = activeExamsMap[paperKey];
-    const totalQ = quizPapers[paperKey]?.questions?.length || 0;
+    const totalQ = allPapersMap[paperKey]?.questions?.length || 0;
     const modeLabel = saved.examMode === "timed" ? "⏱️ Timed Exam Mode" : "📖 Practice Mode";
 
     let timerInfo = "";
@@ -468,7 +681,7 @@ function openResumeModal(paperKey) {
         timerInfo = `<br><strong>Time Remaining:</strong> ${formatTimeDisplay(saved.timeRemaining)}`;
     }
 
-    title.innerText = `Resume: ${quizPapers[paperKey]?.title || paperKey}`;
+    title.innerText = `Resume: ${allPapersMap[paperKey]?.title || paperKey}`;
     infoBox.innerHTML = `
         <strong>Exam Mode:</strong> ${modeLabel}<br>
         <strong>Saved Progress:</strong> Question ${(saved.currentQuestionIndex || 0) + 1} of ${totalQ}${timerInfo}<br>
@@ -500,7 +713,7 @@ function resumeQuiz(paperKey) {
     resetQuizScreenDOM();
     currentPaperKey = paperKey;
     examMode = saved.examMode || "practice";
-    activeQuestions = quizPapers[paperKey].questions;
+    activeQuestions = allPapersMap[paperKey].questions;
     currentQuestionIndex = saved.currentQuestionIndex || 0;
     score = saved.score || 0;
     userAnswers = saved.userAnswers || new Array(activeQuestions.length).fill(null);
@@ -551,7 +764,7 @@ async function saveActiveExamState() {
         const activeDocRef = doc(db, "users", currentUser.uid, "activeExams", currentPaperKey);
         const dataToSave = {
             paperKey: currentPaperKey,
-            paperTitle: quizPapers[currentPaperKey]?.title || currentPaperKey,
+            paperTitle: allPapersMap[currentPaperKey]?.title || currentPaperKey,
             examMode: examMode,
             currentQuestionIndex: currentQuestionIndex,
             score: score,
@@ -587,7 +800,7 @@ function openCompletedModal(paperKey) {
     const modeLabel = compData.mode === "timed" ? "⏱️ Timed Exam Mode" : "📖 Practice Mode";
     const timeStr = compData.timeSpent ? `<br><strong>Time Taken:</strong> ${compData.timeSpent}` : "";
 
-    title.innerText = `Completed: ${quizPapers[paperKey]?.title || paperKey}`;
+    title.innerText = `Completed: ${allPapersMap[paperKey]?.title || paperKey}`;
     infoBox.innerHTML = `
         <strong>Exam Mode:</strong> ${modeLabel}<br>
         <strong>Final Score:</strong> <span style="color: ${compData.percentage >= 50 ? '#2a9d8f' : '#e76f51'}; font-weight: bold;">${compData.score}/${compData.total} (${compData.percentage}%)</span>${timeStr}<br>
@@ -607,7 +820,7 @@ window.confirmReviewCompletedQuiz = function () {
     const compData = completedPapersMap[paperKey];
 
     currentPaperKey = paperKey;
-    activeQuestions = quizPapers[paperKey].questions;
+    activeQuestions = allPapersMap[paperKey].questions;
     score = compData.score || 0;
     examMode = compData.mode || "practice";
     userAnswers = compData.userAnswers || new Array(activeQuestions.length).fill(null);
@@ -639,7 +852,7 @@ function launchQuiz(paperKey, mode, durationSetting) {
     resetQuizScreenDOM();
     currentPaperKey = paperKey;
     examMode = mode;
-    activeQuestions = quizPapers[paperKey].questions;
+    activeQuestions = allPapersMap[paperKey].questions;
     currentQuestionIndex = 0;
     score = 0;
     userAnswers = new Array(activeQuestions.length).fill(null);
@@ -1024,9 +1237,11 @@ window.toggleReviewBookmark = async function (idx) {
             btn.style.border = "1px solid #cbd5e1";
             btn.innerHTML = "<span>🔖</span> Bookmark";
         }
+        const card = document.getElementById(`review-card-${idx}`);
+        if (card) card.dataset.bookmarked = "false";
     } else {
         await setDoc(docRef, {
-            paperTitle: quizPapers[currentPaperKey]?.title || currentPaperKey,
+            paperTitle: allPapersMap[currentPaperKey]?.title || currentPaperKey,
             questionText: questionData.question,
             options: questionData.options,
             correctAnswer: questionData.options[questionData.correctIndex],
@@ -1041,6 +1256,8 @@ window.toggleReviewBookmark = async function (idx) {
             btn.style.border = "1px solid #bae6fd";
             btn.innerHTML = "<span>⭐</span> Bookmarked";
         }
+        const card = document.getElementById(`review-card-${idx}`);
+        if (card) card.dataset.bookmarked = "true";
     }
 };
 
@@ -1051,7 +1268,11 @@ window.filterReviewCards = function (status) {
 
     const cards = document.querySelectorAll('.review-card');
     cards.forEach(card => {
-        if (status === 'all' || card.dataset.status === status) {
+        if (status === 'all') {
+            card.style.display = 'block';
+        } else if (status === 'bookmarked') {
+            card.style.display = card.dataset.bookmarked === 'true' ? 'block' : 'none';
+        } else if (card.dataset.status === status) {
             card.style.display = 'block';
         } else {
             card.style.display = 'none';
@@ -1060,7 +1281,7 @@ window.filterReviewCards = function (status) {
 };
 
 window.renderReviewScreen = function () {
-    const paperTitle = quizPapers[currentPaperKey]?.title || "Exam Paper";
+    const paperTitle = allPapersMap[currentPaperKey]?.title || "Exam Paper";
     const total = activeQuestions.length;
 
     let reviewCardsHTML = "";
@@ -1125,7 +1346,7 @@ window.renderReviewScreen = function () {
             : "";
 
         reviewCardsHTML += `
-            <div class="review-card" data-status="${cardStatus}">
+            <div id="review-card-${idx}" class="review-card" data-status="${cardStatus}" data-bookmarked="${isBookmarked}">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <strong style="font-size: 13px; color: #64748b;">Question ${idx + 1} of ${total}</strong>
@@ -1148,8 +1369,8 @@ window.renderReviewScreen = function () {
 
     document.getElementById("quiz-screen").innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <button onclick="renderResultsScreen()" style="background: none; border: none; color: #475569; font-size: 14px; cursor: pointer; font-weight: 600;">← Back to Summary</button>
-            <span style="font-size: 13px; font-weight: 600; color: #2c3e50;">Reviewing: ${paperTitle}</span>
+            <button class="back-nav-btn" onclick="renderResultsScreen()" style="background: none; border: none; color: #475569; font-size: 14px; cursor: pointer; font-weight: 600;">← Back to Summary</button>
+            <span class="review-title-text" style="font-size: 13px; font-weight: 600; color: #2c3e50;">Reviewing: ${paperTitle}</span>
         </div>
         
         <h2 style="font-size: 20px; color: #1e293b; margin-bottom: 5px; text-align: left;">Question Breakdown</h2>
@@ -1160,6 +1381,7 @@ window.renderReviewScreen = function () {
             <button id="filter-btn-correct" class="filter-btn" onclick="filterReviewCards('correct')">Correct</button>
             <button id="filter-btn-wrong" class="filter-btn" onclick="filterReviewCards('wrong')">Incorrect</button>
             <button id="filter-btn-unanswered" class="filter-btn" onclick="filterReviewCards('unanswered')">Unanswered</button>
+            <button id="filter-btn-bookmarked" class="filter-btn" onclick="filterReviewCards('bookmarked')">Bookmarked</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -1167,7 +1389,7 @@ window.renderReviewScreen = function () {
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px;">
-            <button onclick="renderResultsScreen()" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">← Back to Summary</button>
+            <button class="solid-nav-btn" onclick="renderResultsScreen()" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">← Back to Summary</button>
             <button onclick="goToHome()" style="background-color: #2c3e50; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <span>🏠</span> Return to Homepage
             </button>
@@ -1207,7 +1429,7 @@ async function saveScoreToCloud(finalScore, totalQuestions, mode = "practice", t
     if (!currentUser) return;
     try {
         const percentage = Math.round((finalScore / totalQuestions) * 100);
-        const paperNameStr = quizPapers[currentPaperKey]?.title || currentPaperKey;
+        const paperNameStr = allPapersMap[currentPaperKey]?.title || currentPaperKey;
         await setDoc(doc(db, "users", currentUser.uid, "completedPapers", currentPaperKey), {
             paperName: paperNameStr,
             score: finalScore,
@@ -1246,18 +1468,36 @@ window.logout = function () {
     signOut(auth);
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     const welcomeText = document.getElementById("user-welcome");
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
 
     if (user) {
         currentUser = user;
-        welcomeText.innerText = `Hello, ${user.displayName || "User"}`;
+
+        // Fetch isPremium status
+        try {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().isPremium) {
+                isPremium = true;
+            } else {
+                isPremium = false;
+            }
+        } catch (e) {
+            console.error("Error fetching premium status:", e);
+            isPremium = false;
+        }
+
+        const premiumTag = isPremium
+            ? `<span style="font-size: 11px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">PRO</span>`
+            : `<span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">FREE</span>`;
+        welcomeText.innerHTML = `Hello, ${user.displayName || "User"} ${premiumTag}`;
         loginBtn.classList.add("hide");
         logoutBtn.classList.remove("hide");
     } else {
         currentUser = null;
+        isPremium = false;
         welcomeText.innerText = "Please log in →";
         loginBtn.classList.remove("hide");
         logoutBtn.classList.add("hide");
@@ -1265,6 +1505,90 @@ onAuthStateChanged(auth, (user) => {
     switchTab("available");
     loadHomepage();
 });
+
+// ==========================================
+// RAZORPAY SUBSCRIPTION CHECKOUT
+// ==========================================
+window.handleRazorpayCheckout = async function () {
+    if (!currentUser) {
+        alert("Please log in with Google to purchase a Premium Subscription!");
+        return window.loginWithGoogle();
+    }
+
+    if (isPremium) {
+        alert("You are already a Premium user!");
+        return;
+    }
+
+    const confirmPurchase = confirm("Unlock ALL test papers with a one-time purchase of ₹1000. Proceed to secure payment?");
+    if (!confirmPurchase) return;
+
+    try {
+        // Show loading state (you could use a spinner here)
+        document.body.style.cursor = "wait";
+
+        const createOrder = httpsCallable(functions, 'createRazorpayOrder');
+        const orderResult = await createOrder();
+        const orderData = orderResult.data;
+
+        const options = {
+            key: orderData.keyId,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: "OphthaQ",
+            description: "One-Time Purchase to Unlock All Test Papers",
+            order_id: orderData.id,
+            handler: async function (response) {
+                try {
+                    const verifyPayment = httpsCallable(functions, 'verifyRazorpayPayment');
+                    const verifyResult = await verifyPayment({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    });
+
+                    if (verifyResult.data.success) {
+                        alert("Payment Successful! Welcome to Premium!");
+                        isPremium = true;
+                        // Force a reload of the UI
+                        loadHomepage();
+                        const premiumTag = isPremium
+                            ? `<span style="font-size: 11px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">PRO</span>`
+                            : `<span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">FREE</span>`;
+                        welcomeText.innerHTML = `Hello, ${currentUser.displayName || "User"} ${premiumTag}`;
+                    }
+                } catch (verifyError) {
+                    console.error("Verification error:", verifyError);
+                    alert("Payment verification failed. Please contact support.");
+                }
+            },
+            prefill: {
+                name: currentUser.displayName,
+                email: currentUser.email,
+            },
+            theme: {
+                color: "#4f46e5"
+            },
+            modal: {
+                ondismiss: function () {
+                    document.body.style.cursor = "default";
+                }
+            }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            alert("Payment failed: " + response.error.description);
+        });
+        rzp.open();
+        document.body.style.cursor = "default";
+
+    } catch (error) {
+        document.body.style.cursor = "default";
+        console.error("Error starting checkout:", error);
+        alert("Could not start checkout process. Please try again.");
+    }
+};
 
 // ==========================================
 // 8. THEME MANAGEMENT
@@ -1296,4 +1620,89 @@ window.toggleTheme = function () {
             themeBtn.innerText = isDark ? "🌙" : "☀️";
         }
     }, 0);
+})();
+
+// ==========================================
+// 10. PROFILE MANAGEMENT
+// ==========================================
+window.openProfileModal = function () {
+    if (!currentUser) return;
+
+    document.getElementById("profile-name-input").value = currentUser.displayName || "";
+
+    const statusDiv = document.getElementById("profile-subscription-status");
+    const plansSection = document.getElementById("profile-plans-section");
+
+    if (isPremium) {
+        statusDiv.innerHTML = `<span style="color: #16a34a;">✅ Premium Member</span>`;
+        plansSection.style.display = "none";
+    } else {
+        statusDiv.innerHTML = `<span style="color: #64748b;">Free Tier</span>`;
+        plansSection.style.display = "block";
+    }
+
+    document.getElementById("home-screen").classList.add("hide");
+    document.getElementById("quiz-screen").classList.add("hide");
+    document.getElementById("profile-screen").classList.remove("hide");
+};
+
+window.closeProfileModal = function () {
+    document.getElementById("profile-screen").classList.add("hide");
+    document.getElementById("home-screen").classList.remove("hide");
+};
+
+window.saveProfileName = async function () {
+    if (!currentUser) return;
+    const newName = document.getElementById("profile-name-input").value.trim();
+    if (!newName) return alert("Name cannot be empty!");
+
+    try {
+        await updateProfile(currentUser, { displayName: newName });
+
+        // Update UI
+        const premiumTag = isPremium
+            ? `<span style="font-size: 11px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">PRO</span>`
+            : `<span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">FREE</span>`;
+        document.getElementById("user-welcome").innerHTML = `Hello, ${newName} ${premiumTag}`;
+
+        alert("Profile name updated successfully!");
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        alert("Failed to update profile name.");
+    }
+};
+(function initContentProtection() {
+    // Disable right click (context menu)
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    // Disable copy, cut, paste
+    document.addEventListener('copy', event => event.preventDefault());
+    document.addEventListener('cut', event => event.preventDefault());
+    document.addEventListener('paste', event => event.preventDefault());
+
+    // Disable keyboard shortcuts (Ctrl+C, Cmd+C, Ctrl+P, Cmd+P, Ctrl+S, Cmd+S, PrintScreen, etc.)
+    document.addEventListener('keydown', event => {
+        // Prevent PrintScreen (some browsers)
+        if (event.key === 'PrintScreen') {
+            navigator.clipboard.writeText('');
+            event.preventDefault();
+        }
+
+        // Check for Ctrl or Cmd key combinations
+        if (event.ctrlKey || event.metaKey) {
+            const forbiddenKeys = ['c', 'p', 's', 'x', 'a']; // Copy, Print, Save, Cut, Select All
+            if (forbiddenKeys.includes(event.key.toLowerCase())) {
+                event.preventDefault();
+            }
+        }
+    });
+
+    // Attempt to clear clipboard if window loses focus (Screenshot deterrent)
+    window.addEventListener('blur', () => {
+        try {
+            navigator.clipboard.writeText('');
+        } catch (err) {
+            // Ignore errors
+        }
+    });
 })();
