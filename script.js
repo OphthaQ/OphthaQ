@@ -85,6 +85,7 @@ const appStructure = [
             { id: "clinical_adv", title: "Clinical advanced", gid: "2003570964" } // ICO D
         ]
     },
+    /*
     {
         id: "inicet",
         title: "INICET - SS",
@@ -99,6 +100,7 @@ const appStructure = [
             { id: "all", title: "All Papers", gid: "2121725938" } // Senior residency
         ]
     }
+    */
 ];
 
 let quizPapers = {};
@@ -366,9 +368,9 @@ window.renderPapersForSubcategory = function (categoryId, subcategoryId, fromCat
         const hasProgress = activeExamsMap[paperKey];
         const isCompleted = completedPapersMap[paperKey];
 
-        // Freemium check: Only the very first paper in basics_ico is free.
+        // Freemium check: The first paper in every subcategory is free, except for clinical advanced.
         let isFreePaper = false;
-        if (categoryId === appStructure[0].id && subcategoryId === appStructure[0].subcategories[0].id) {
+        if (subcategoryId !== "clinical_adv") {
             const firstPaperKey = Object.keys(subData.papers)[0];
             if (paperKey === firstPaperKey) {
                 isFreePaper = true;
@@ -387,7 +389,8 @@ window.renderPapersForSubcategory = function (categoryId, subcategoryId, fromCat
                 </div>
             `;
             paperButton.onclick = function () {
-                window.handleRazorpayCheckout();
+                alert("This paper is locked. Please use the Beta Tester Access in your profile to unlock all papers for free!");
+                window.openProfileModal();
             };
         } else if (hasProgress) {
             const savedData = activeExamsMap[paperKey];
@@ -1509,86 +1512,52 @@ onAuthStateChanged(auth, async (user) => {
 // ==========================================
 // RAZORPAY SUBSCRIPTION CHECKOUT
 // ==========================================
-window.handleRazorpayCheckout = async function () {
+window.claimBetaAccess = async function () {
     if (!currentUser) {
-        alert("Please log in with Google to purchase a Premium Subscription!");
+        alert("Please log in with Google to claim your Beta Tester access!");
         return window.loginWithGoogle();
     }
 
     if (isPremium) {
-        alert("You are already a Premium user!");
+        alert("You are already a Premium member!");
         return;
     }
 
-    const confirmPurchase = confirm("Unlock ALL test papers with a one-time purchase of ₹1000. Proceed to secure payment?");
-    if (!confirmPurchase) return;
+    const passcodeInput = document.getElementById("beta-passcode-input").value.trim();
+    if (passcodeInput !== "BETA2026") {
+        alert("Invalid passcode. Please complete the feedback form to get the correct passcode.");
+        return;
+    }
 
     try {
-        // Show loading state (you could use a spinner here)
+        // Show loading state
         document.body.style.cursor = "wait";
 
-        const createOrder = httpsCallable(functions, 'createRazorpayOrder');
-        const orderResult = await createOrder();
-        const orderData = orderResult.data;
+        // Update user in Firestore
+        await setDoc(doc(db, "users", currentUser.uid), { isPremium: true }, { merge: true });
 
-        const options = {
-            key: orderData.keyId,
-            amount: orderData.amount,
-            currency: orderData.currency,
-            name: "OphthaQ",
-            description: "One-Time Purchase to Unlock All Test Papers",
-            order_id: orderData.id,
-            handler: async function (response) {
-                try {
-                    const verifyPayment = httpsCallable(functions, 'verifyRazorpayPayment');
-                    const verifyResult = await verifyPayment({
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature
-                    });
+        isPremium = true;
 
-                    if (verifyResult.data.success) {
-                        alert("Payment Successful! Welcome to Premium!");
-                        isPremium = true;
-                        // Force a reload of the UI
-                        loadHomepage();
-                        const premiumTag = isPremium
-                            ? `<span style="font-size: 11px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">PRO</span>`
-                            : `<span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">FREE</span>`;
-                        welcomeText.innerHTML = `Hello, ${currentUser.displayName || "User"} ${premiumTag}`;
-                    }
-                } catch (verifyError) {
-                    console.error("Verification error:", verifyError);
-                    alert("Payment verification failed. Please contact support.");
-                }
-            },
-            prefill: {
-                name: currentUser.displayName,
-                email: currentUser.email,
-            },
-            theme: {
-                color: "#4f46e5"
-            },
-            modal: {
-                ondismiss: function () {
-                    document.body.style.cursor = "default";
-                }
-            }
-        };
+        alert("Success! You now have full Premium Access. Thank you for your feedback!");
 
-        const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (response) {
-            alert("Payment failed: " + response.error.description);
-        });
-        rzp.open();
+        // Force a reload of the UI
+        loadHomepage();
+
+        // Update profile UI
+        const premiumTag = `<span style="font-size: 11px; background: linear-gradient(45deg, #f59e0b, #fbbf24); color: white; padding: 2px 8px; border-radius: 12px; margin-left: 6px; font-weight: 600;">PRO</span>`;
+        document.getElementById("user-welcome").innerHTML = `Hello, ${currentUser.displayName || "User"} ${premiumTag}`;
+
+        // Re-open profile modal to update the visual state
+        window.openProfileModal();
+
         document.body.style.cursor = "default";
-
     } catch (error) {
         document.body.style.cursor = "default";
-        console.error("Error starting checkout:", error);
-        alert("Could not start checkout process. Please try again.");
+        console.error("Error claiming beta access:", error);
+        alert("An error occurred while upgrading your account. Please try again.");
     }
 };
+
 
 // ==========================================
 // 8. THEME MANAGEMENT
