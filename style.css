@@ -670,6 +670,18 @@ body.dark-mode .selected-option {
     color: #eff6ff !important;
 }
 
+body.dark-mode .option-btn.correct {
+    background-color: #064e3b !important;
+    border-color: #10b981 !important;
+    color: #34d399 !important;
+}
+
+body.dark-mode .option-btn.wrong {
+    background-color: #7f1d1d !important;
+    border-color: #ef4444 !important;
+    color: #f87171 !important;
+}
+
 body.dark-mode .filter-btn {
     background-color: #1e293b;
     border-color: #334155;
