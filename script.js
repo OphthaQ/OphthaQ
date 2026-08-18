@@ -1525,15 +1525,39 @@ window.claimBetaAccess = async function () {
         return;
     }
 
-    const passcodeInput = document.getElementById("beta-passcode-input").value.trim();
-    if (passcodeInput !== "BETA2026") {
-        alert("Invalid passcode. Please complete the feedback form to get the correct passcode.");
+    const passcodeInput = document.getElementById("beta-passcode-input").value.trim().toUpperCase();
+    if (!passcodeInput) {
+        alert("Please enter a passcode.");
         return;
     }
 
     try {
         // Show loading state
         document.body.style.cursor = "wait";
+
+        // Validate passcode in Firestore
+        const passcodeRef = doc(db, "passcodes", passcodeInput);
+        const passcodeSnap = await getDoc(passcodeRef);
+
+        if (!passcodeSnap.exists()) {
+            document.body.style.cursor = "default";
+            alert("Invalid passcode. Please check your email for the correct code.");
+            return;
+        }
+
+        const passcodeData = passcodeSnap.data();
+        if (passcodeData.used) {
+            document.body.style.cursor = "default";
+            alert("This passcode has already been used! Each code is single-use only.");
+            return;
+        }
+
+        // Mark passcode as used
+        await setDoc(passcodeRef, {
+            used: true,
+            claimedBy: currentUser.uid,
+            claimedAt: new Date().toISOString()
+        }, { merge: true });
 
         // Update user in Firestore
         await setDoc(doc(db, "users", currentUser.uid), { isPremium: true }, { merge: true });
